@@ -91,10 +91,6 @@ if isfile("invar.in"):
     	flag_calc_toc11 = int(invar['calc_toc11'])
     else:
     	flag_calc_toc11 = 0
-    if 'calc_toc_Josh' in invar:
-    	calc_toc_Josh = int(invar['calc_toc_Josh'])
-    else:
-    	calc_toc_Josh = 0
     
     if 'calc_rc' in invar:
     	flag_calc_rc = int(invar['calc_rc'])
@@ -117,10 +113,6 @@ if isfile("invar.in"):
         lda_fermi = float(invar['lda_fermi']);
     else:
         lda_fermi = 0.0
-    if 'tfft_step' in invar:
-    	tfft_step = float(invar['tfft_step'])
-    else:
-    	tfft_step = 0.01
     if 'invar_den' in invar:
     	invar_den = float(invar['invar_den'])
     else:
@@ -153,11 +145,6 @@ if isfile("invar.in"):
     	abinit_eqp = int(invar['abinit_eqp'])
     else:
     	abinit_eqp = 0 
-    if 'nkpt' in invar:
-        nkpt =   int(invar['nkpt']);
-    else: 
-        nkpt = maxkpt-minkpt+1
-        print("nkpt not found, define nkpt = maxkpt - minkpt + 1")
 else :
     print ("Invar file not found (invar.in). Impossible to continue.")
     sys.exit(1)
