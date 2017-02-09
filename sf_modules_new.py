@@ -223,7 +223,7 @@ def read_sigfile(sigfilename, nkpt, bdgw_min, bdgw_max, spin=0, nspin=0):
     return en, res, ims 
 
 def calc_spf_gw(bdrange, kptrange, bdgw_min, wtk, en, enmin, enmax, res,
-                ims, hartree, efermi, invar_eta):
+                ims, hartree, gwfermi, invar_eta):
     import numpy as np;
     import csv
     print("calc_spf_gw ::")
@@ -257,18 +257,18 @@ def calc_spf_gw(bdrange, kptrange, bdgw_min, wtk, en, enmin, enmax, res,
             with open("spf_gw-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat",
                  'w') as f:
                 writer = csv.writer(f, delimiter = '\t')
-                writer.writerows(zip (newen-efermi, spfkb))
+                writer.writerows(zip (newen-gwfermi, spfkb))
             #outnamekb = "spf_gw-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat"
             #outfilekb = open(outnamekb,'w')
             #for ien in xrange(np.size(newen)):
             #    newen[ien] = newen[ien] - efermi
             #    outfilekb.write("%8.4f %12.8e %12.8e %12.8e %12.8e\n" % (newen[ien], spfkb[ien], redenom[ien], tmpres[ien], tmpim[ien]))
             #outfilekb.close()
-    return newen-efermi, spftot
+    return newen-gwfermi, spftot
 
 
 
-def find_eqp_resigma(en, resigma, efermi):
+def find_eqp_resigma(en, resigma, gwfermi):
     """
     This function is supposed to deal with the plasmaron problem 
     and calculate the quasiparticle energy once it is fed with 
@@ -295,7 +295,7 @@ def find_eqp_resigma(en, resigma, efermi):
             tmpeqp = en[i-1] - resigma[i-1]*(en[i] - en[i-1])/(resigma[i] - resigma[i-1]) # High school formula
             zeros.append(tmpeqp)
             nzeros+=1
-    if tmpeqp - efermi > tol_fermi: 
+    if tmpeqp - gwfermi > tol_fermi: 
         tmpeqp=zeros[0]
     if nzeros==0 : 
         print()
@@ -314,7 +314,7 @@ def find_eqp_resigma(en, resigma, efermi):
    #     print(" WARNING: Plasmarons")
     return tmpeqp, nzeros
 
-def calc_eqp_imeqp(bdrange, kptrange, en,enmin, enmax, res, ims, hartree, efermi, nkpt, nband, scgw, Elda):
+def calc_eqp_imeqp(bdrange, kptrange, en,enmin, enmax, res, ims, hartree, gwfermi, nkpt, nband, scgw, Elda):
     """
     This function calculates qp energies and corresponding
     values of the imaginary part of sigma for a set of
@@ -343,7 +343,7 @@ def calc_eqp_imeqp(bdrange, kptrange, en,enmin, enmax, res, ims, hartree, efermi
             interpims = interp1d(en, ims[ik,ib], kind = 'linear', axis = -1)
             tempim = interpims(newen)
             # New method to overcome plasmaron problem
-            eqp[ik,ib], nzeros = find_eqp_resigma(newen,temparray,efermi)
+            eqp[ik,ib], nzeros = find_eqp_resigma(newen,temparray,gwfermi)
             if nzeros==0: 
                 print()
                 print(" WARNING: ik "+str(ik)+" ib "+str(ib)+". No eqp found!!!")
@@ -361,7 +361,7 @@ def calc_eqp_imeqp(bdrange, kptrange, en,enmin, enmax, res, ims, hartree, efermi
             #    print()
             #    print(""" WARNING: im(Sigma(e_k)) <= 0 !!! ik ib e_k
             #          im(Sigma(e_k)) = """, ik+1, ib+1, eqp[ik,ib], imeqp[ik,ib])
-            outfile2.write("%14.5f" % (eqp[ik,ib]-efermi))
+            outfile2.write("%14.5f" % (eqp[ik,ib]-gwfermi))
             outfile3.write("%14.5f" % (imeqp[ik,ib]))
 
         outfile2.write("\n")
@@ -380,7 +380,7 @@ def A_model_crc(x,eqpkb,beta1, beta2,wp, eta_crc):
         m += 1
     return (1.0/(math.pi))*abs(G.imag)
 
-def calc_crc (bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
+def calc_crc (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
                     eqp,imeqp, Elda, scgw, Eplasmon, ims, invar_den,
                     invar_eta, wtk, metal_valence):
     import numpy as np
@@ -397,7 +397,7 @@ def calc_crc (bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
     tol_fermi = 1e-3
     #pdos = np.array(pdos)
     fftsize = FFTtsize
-    outname = "Norm_check_crc.dat"
+    outname = "occupation_crc.dat"
     outfile = open(outname,'w')
     for ik in kptrange:
         ikeff = ik + 1
@@ -410,9 +410,13 @@ def calc_crc (bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
                 Elda_kb = eqp[ik, ib]
             else:
                 Elda_kb = Elda[ik, ib]
+            if scgw == 1:
+                xfermi = gwfermi
+            else:
+                xfermi = lda_fermi
             print("eqp:", eqp_kb)
             print("Elda:", Elda_kb)
-            if eqp_kb <= tol_fermi:
+            if Elda_kb - xfermi  <= tol_fermi:
                 Done = False
                 Es2 = 0
                 while not Done:
@@ -426,7 +430,7 @@ def calc_crc (bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
                 Done_max = False
                 Es = 0
                 while not Done_max:
-                    NewEn_max = -Elda_kb - Es
+                    NewEn_max = -(Elda_kb-xfermi) - Es
                     Es += 1
                     if NewEn_max < en[-1] and NewEn_max+Elda_kb < en[-1]:
                         Done_max = True
@@ -532,7 +536,7 @@ def calc_crc (bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
                 toc96_tot += spfkb
                 with open("TOC96-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat", 'w') as f:
                     writer = csv.writer(f, delimiter = '\t')
-                    writer.writerows(zip (interp_en, spfkb))
+                    writer.writerows(zip (interp_en-gwfermi, spfkb))
                 #outnamekb = "TOC11-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat"
                 #outfilekb = open(outnamekb,'w')
                 #en_toc11 = []
@@ -546,17 +550,16 @@ def calc_crc (bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
                 crc_tot += spfkb+Gw_unocc
                 with open("CRC_unocc"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat", 'w') as f:
                     writer = csv.writer(f, delimiter = '\t')
-                    writer.writerows(zip (interp_en, Gw_unocc))
-                
+                    writer.writerows(zip(interp_en-gwfermi, Gw_unocc))
                 print("calculate occupation from TOC96 : :")
                 norm = np.trapz(spfkb,interp_en)/(wtk[ik])
                 print("The occupation for ik, ib, is", ikeff, ibeff, norm)
     
                 outfile.write("%8.4f %12.8e \n" % (newdx, norm))
     outfile.close()
-    return interp_en, toc96_tot, crc_tot
+    return interp_en-gwfermi, toc96_tot, crc_tot
 
-def calc_toc11_new (efermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
+def calc_toc11_new (gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
                     eqp, Elda, scgw, Eplasmon, ims, invar_den,
                     invar_eta, wtk, metal_valence):
     import numpy as np
@@ -592,7 +595,7 @@ def calc_toc11_new (efermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,
                 Elda_kb = Elda[ik, ib] 
 
             if scgw == 1:
-                xfermi = efermi 
+                xfermi = gwfermi 
             else:
                 xfermi = lda_fermi 
             print("eqp:", eqp_kb)
@@ -693,7 +696,7 @@ def calc_toc11_new (efermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,
                 toc_tot += spfkb
                 with open("TOC11-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat", 'w') as f:
                     writer = csv.writer(f, delimiter = '\t')
-                    writer.writerows(zip (interp_en-efermi, spfkb))
+                    writer.writerows(zip (interp_en-gwfermi, spfkb))
                 #outnamekb = "TOC11-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat"
                 #outfilekb = open(outnamekb,'w')
                 #en_toc11 = []
@@ -711,7 +714,7 @@ def calc_toc11_new (efermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,
     
                 outfile.write("%8.4f %12.8e \n" % (newdx, norm))
     outfile.close()
-    return interp_en-efermi, toc_tot
+    return interp_en-gwfermi, toc_tot
 
 def calc_rc (bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
                     eqp, Elda, scgw, encut, ims, invar_den, invar_eta, wtk):

@@ -41,7 +41,7 @@ if isfile("invar.in"):
     if 'Eplasmon' in invar:
         Eplasmon = int(invar['Eplasmon'])
     else:
-        Eplasmon = 20
+        Eplasmon = 50
     if 'minband' in invar:
         minband = int(invar['minband'])
     else:
@@ -105,10 +105,10 @@ if isfile("invar.in"):
         extinf = float(invar['extinf']);
     else:
         extinf = 0
-    if 'efermi' in invar:
-        efermi = float(invar['efermi']);
+    if 'gwfermi' in invar:
+        gwfermi = float(invar['gwfermi']);
     else:
-        efermi = 0.0
+        gwfermi = 0.0
     if 'lda_fermi' in invar:
         lda_fermi = float(invar['lda_fermi']);
     else:
@@ -151,7 +151,6 @@ else :
 print ("Reading invar done.")
 nband = bdgw_max - bdgw_min + 1
 hartree = read_hartree()
-#hartree = hartree - efermi
 
 if scgw == 0:
     print("""
@@ -174,10 +173,8 @@ else:
           WARNING: Weight of k points are neglected!
          """)
     wtk = [1]*nkpt
-#print "WTK is:", wtk
 
 en, res, ims = read_sigfile(sigfilename, nkpt, bdgw_min, bdgw_max, spin=0, nspin=0)
-#en = en - efermi
 
 
 bdrange = range(minband - bdgw_min, maxband - bdgw_min + 1)
@@ -189,8 +186,6 @@ kptrange = range(minkpt - 1, maxkpt)
 ## of the shifted Re\Sigma
 
 # ======== READING _SIG FILE ======= #
-#enmit = enmin+efermi
-#enmat= enmax+efermi
 ### ===================================================== ###
 print(" # ------------------------------------------------ # ")
 # Here we move to a subdirectory to avoid flooding-up the current directory
@@ -207,7 +202,7 @@ if abinit_eqp == 1:
     eqp = eqp_abinit
 else:
     eqp, imeqp = calc_eqp_imeqp(bdrange,kptrange, en, enmin, enmax, res, ims,
-                                hartree, efermi, nkpt, nband, scgw, Elda)
+                                hartree, gwfermi, nkpt, nband, scgw, Elda)
 ### ================================= ###
 ### ===== GW SPECTRAL FUNCTION ====== ###
 # GW spectral function part
@@ -218,7 +213,7 @@ if flag_calc_gw == 1:
         from sf_modules_spin import calc_spf_gw_spin
         newen, spftot_up, spftot_down = calc_spf_gw_spin(bdrange, kptrange,
                                                          bdgw_min, wtk, en, enmin, enmax,
-                                                         res,ims, hartree, efermi)
+                                                         res,ims, hartree, gwfermi)
             ### ==== WRITING OUT GW SPECTRAL FUNCTION === ###
         print(" ### Writing out A(\omega)_GW...  ")
         outname = "spftot_gw"+"_s"+str(sfac)+"_p"+str(pfac)+"_"+str(penergy)+"ev"+".dat"
@@ -233,7 +228,7 @@ if flag_calc_gw == 1:
 
     elif spin_on == 0:
         newen, spftot = calc_spf_gw(bdrange, kptrange, bdgw_min, wtk, en, enmin, enmax, res,
-                    ims, hartree, efermi, invar_eta)
+                    ims, hartree, gwfermi, invar_eta)
             ### ==== WRITING OUT GW SPECTRAL FUNCTION === ###
         print(" ### Writing out A(\omega)_GW...  ")
         outname = "spftot_gw"+"_s"+str(sfac)+"_p"+str(pfac)+"_"+str(penergy)+"ev"+".dat"
@@ -257,7 +252,6 @@ if flag_calc_toc11 == 1:
         outname = "spftot_toc11"+"_s"+str(sfac)+"_p"+str(pfac)+"_"+str(penergy)+"ev"+".dat"
         outfile = open(outname,'w')
         for i in xrange(len(interp_en)):
-            interp_en[i] = interp_en[i] - efermi
             outfile.write("%8.4f %12.8e %12.8e\n" % (interp_en[i], toc_tot_up[i],
                                               toc_tot_down[i]))
         outfile.close()
@@ -266,7 +260,7 @@ if flag_calc_toc11 == 1:
         print (" ### Writing out A(\omega)_TOC11..")
     else:
         print( "Calculating TOC11 begins")
-        interp_en, toc_tot = calc_toc11_new(efermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax, 
+        interp_en, toc_tot = calc_toc11_new(gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax, 
                                          eqp, Elda,scgw, Eplasmon, ims,
                                             invar_den, invar_eta, wtk,
                                             metal_valence)
