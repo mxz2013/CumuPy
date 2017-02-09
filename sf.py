@@ -151,7 +151,7 @@ else :
 print ("Reading invar done.")
 nband = bdgw_max - bdgw_min + 1
 hartree = read_hartree()
-hartree = hartree - efermi
+#hartree = hartree - efermi
 
 if scgw == 0:
     print("""
@@ -160,13 +160,13 @@ if scgw == 0:
           fermi energy of E0, e.g., LDA fermi enegy.
           """)
     Elda = read_lda()
-    Elda = Elda-lda_fermi
+    Elda = Elda
 else:
     Elda = np.zeros((nkpt,nband))
-import csv
-with open("Elda_fermi.dat", 'w') as f:
-    writer = csv.writer(f, delimiter = '\t')
-    writer.writerows(zip(Elda))
+#import csv
+#with open("Elda_fermi.dat", 'w') as f:
+#    writer = csv.writer(f, delimiter = '\t')
+#    writer.writerows(zip(Elda))
 if flag_wtk == 1:
     wtk = read_wtk()
 else:
@@ -177,7 +177,8 @@ else:
 #print "WTK is:", wtk
 
 en, res, ims = read_sigfile(sigfilename, nkpt, bdgw_min, bdgw_max, spin=0, nspin=0)
-en = en - efermi
+#en = en - efermi
+
 
 bdrange = range(minband - bdgw_min, maxband - bdgw_min + 1)
 kptrange = range(minkpt - 1, maxkpt)
@@ -186,12 +187,6 @@ kptrange = range(minkpt - 1, maxkpt)
 #give the option of using abinit QP energies of the QP energies 
 ## recalculate from cumulant code by finding zero crossing
 ## of the shifted Re\Sigma
-if abinit_eqp == 1:   
-    eqp_abinit = read_eqp_abinit()
-    eqp = eqp_abinit - efermi
-else:
-    eqp, imeqp = calc_eqp_imeqp(bdrange,kptrange, en, enmin, enmax, res, ims,
-                                hartree, 0, nkpt, nband, scgw, Elda)
 
 # ======== READING _SIG FILE ======= #
 #enmit = enmin+efermi
@@ -199,7 +194,7 @@ else:
 ### ===================================================== ###
 print(" # ------------------------------------------------ # ")
 # Here we move to a subdirectory to avoid flooding-up the current directory
-newdirname = "Spfunctions"
+newdirname = "Spfunctions_test"
 origdir = getcwd() # remember where we are
 newdir = join(origdir, newdirname) # Complete path of the new directory
 print(" Moving into output directory:\n ", newdir)
@@ -207,6 +202,12 @@ if not isdir(newdir) :
     mkdir(newdir)
 chdir(newdir)
 
+if abinit_eqp == 1:   
+    eqp_abinit = read_eqp_abinit()
+    eqp = eqp_abinit
+else:
+    eqp, imeqp = calc_eqp_imeqp(bdrange,kptrange, en, enmin, enmax, res, ims,
+                                hartree, efermi, nkpt, nband, scgw, Elda)
 ### ================================= ###
 ### ===== GW SPECTRAL FUNCTION ====== ###
 # GW spectral function part
@@ -256,6 +257,7 @@ if flag_calc_toc11 == 1:
         outname = "spftot_toc11"+"_s"+str(sfac)+"_p"+str(pfac)+"_"+str(penergy)+"ev"+".dat"
         outfile = open(outname,'w')
         for i in xrange(len(interp_en)):
+            interp_en[i] = interp_en[i] - efermi
             outfile.write("%8.4f %12.8e %12.8e\n" % (interp_en[i], toc_tot_up[i],
                                               toc_tot_down[i]))
         outfile.close()
@@ -264,7 +266,7 @@ if flag_calc_toc11 == 1:
         print (" ### Writing out A(\omega)_TOC11..")
     else:
         print( "Calculating TOC11 begins")
-        interp_en, toc_tot = calc_toc11_new(bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax, 
+        interp_en, toc_tot = calc_toc11_new(efermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax, 
                                          eqp, Elda,scgw, Eplasmon, ims,
                                             invar_den, invar_eta, wtk,
                                             metal_valence)

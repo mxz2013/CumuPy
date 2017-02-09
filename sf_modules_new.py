@@ -225,8 +225,10 @@ def read_sigfile(sigfilename, nkpt, bdgw_min, bdgw_max, spin=0, nspin=0):
 def calc_spf_gw(bdrange, kptrange, bdgw_min, wtk, en, enmin, enmax, res,
                 ims, hartree, efermi, invar_eta):
     import numpy as np;
+    import csv
     print("calc_spf_gw ::")
     newdx = 0.005
+    #newen = np.arange(en[0], en[-1], newdx)
     if enmin < en[0] and enmax >= en[-1]:
         newen = np.arange(en[0],en[-1],newdx)
     elif enmin < en[0]:
@@ -245,17 +247,24 @@ def calc_spf_gw(bdrange, kptrange, bdgw_min, wtk, en, enmin, enmax, res,
             ibeff = ib + bdgw_min
             interpres = interp1d(en, res[ik,ib], kind = 'linear', axis = -1)
             interpims = interp1d(en, ims[ik,ib], kind = 'linear', axis = -1)
+            #print("SKYDEBUT newen", newen[0], newen[-1])
+            #print("SKYDEBUT en", en[0], en[-1])
             tmpres = interpres(newen)
             redenom = newen - hartree[ik,ib] - interpres(newen)
             tmpim = interpims(newen)
             spfkb = wtk[ik] * abs(tmpim)/np.pi/(redenom**2 + tmpim**2)
             spftot += spfkb
-            outnamekb = "spf_gw-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat"
-            outfilekb = open(outnamekb,'w')
-            for ien in xrange(np.size(newen)) :
-                outfilekb.write("%8.4f %12.8e %12.8e %12.8e %12.8e\n" % (newen[ien], spfkb[ien], redenom[ien], tmpres[ien], tmpim[ien]))
-            outfilekb.close()
-    return newen, spftot
+            with open("spf_gw-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat",
+                 'w') as f:
+                writer = csv.writer(f, delimiter = '\t')
+                writer.writerows(zip (newen-efermi, spfkb))
+            #outnamekb = "spf_gw-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat"
+            #outfilekb = open(outnamekb,'w')
+            #for ien in xrange(np.size(newen)):
+            #    newen[ien] = newen[ien] - efermi
+            #    outfilekb.write("%8.4f %12.8e %12.8e %12.8e %12.8e\n" % (newen[ien], spfkb[ien], redenom[ien], tmpres[ien], tmpim[ien]))
+            #outfilekb.close()
+    return newen-efermi, spftot
 
 
 
@@ -352,7 +361,7 @@ def calc_eqp_imeqp(bdrange, kptrange, en,enmin, enmax, res, ims, hartree, efermi
             #    print()
             #    print(""" WARNING: im(Sigma(e_k)) <= 0 !!! ik ib e_k
             #          im(Sigma(e_k)) = """, ik+1, ib+1, eqp[ik,ib], imeqp[ik,ib])
-            outfile2.write("%14.5f" % (eqp[ik,ib]))
+            outfile2.write("%14.5f" % (eqp[ik,ib]-efermi))
             outfile3.write("%14.5f" % (imeqp[ik,ib]))
 
         outfile2.write("\n")
@@ -360,6 +369,7 @@ def calc_eqp_imeqp(bdrange, kptrange, en,enmin, enmax, res, ims, hartree, efermi
     outfile2.close()
     outfile3.close()
     return eqp, imeqp
+
 def A_model_crc(x,eqpkb,beta1, beta2,wp, eta_crc):
     import math
     G=0
@@ -546,7 +556,7 @@ def calc_crc (bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
     outfile.close()
     return interp_en, toc96_tot, crc_tot
 
-def calc_toc11_new (bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
+def calc_toc11_new (efermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
                     eqp, Elda, scgw, Eplasmon, ims, invar_den,
                     invar_eta, wtk, metal_valence):
     import numpy as np
@@ -577,12 +587,17 @@ def calc_toc11_new (bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
             print(" ik, ib:",ikeff, ibeff)
             eqp_kb = eqp[ik, ib]
             if scgw == 1:
-                Elda_kb = eqp[ik, ib]
+                Elda_kb = eqp[ik, ib] 
             else:
-                Elda_kb = Elda[ik, ib]
+                Elda_kb = Elda[ik, ib] 
+
+            if scgw == 1:
+                xfermi = efermi 
+            else:
+                xfermi = lda_fermi 
             print("eqp:", eqp_kb)
             print("Elda:", Elda_kb)
-            if eqp_kb <= tol_fermi:
+            if Elda_kb - xfermi <= tol_fermi:
                 Done = False
                 Es2 = 0
                 while not Done:
@@ -596,7 +611,7 @@ def calc_toc11_new (bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
                 Done_max = False
                 Es = 0
                 while not Done_max:
-                    NewEn_max = -Elda_kb - Es
+                    NewEn_max = -(Elda_kb - xfermi) - Es
                     Es += 1
                     if NewEn_max < en[-1] and NewEn_max+Elda_kb < en[-1]:
                         Done_max = True
@@ -678,7 +693,7 @@ def calc_toc11_new (bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
                 toc_tot += spfkb
                 with open("TOC11-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat", 'w') as f:
                     writer = csv.writer(f, delimiter = '\t')
-                    writer.writerows(zip (interp_en, spfkb))
+                    writer.writerows(zip (interp_en-efermi, spfkb))
                 #outnamekb = "TOC11-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat"
                 #outfilekb = open(outnamekb,'w')
                 #en_toc11 = []
@@ -696,7 +711,7 @@ def calc_toc11_new (bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
     
                 outfile.write("%8.4f %12.8e \n" % (newdx, norm))
     outfile.close()
-    return interp_en, toc_tot
+    return interp_en-efermi, toc_tot
 
 def calc_rc (bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
                     eqp, Elda, scgw, encut, ims, invar_den, invar_eta, wtk):
