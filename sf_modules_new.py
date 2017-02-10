@@ -600,6 +600,7 @@ def calc_toc11_new (gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en
                 xfermi = lda_fermi 
             print("eqp:", eqp_kb)
             print("Elda:", Elda_kb)
+            print("xfermi:", xfermi)
             if Elda_kb - xfermi <= tol_fermi:
                 Done = False
                 Es2 = 0
