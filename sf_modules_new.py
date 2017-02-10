@@ -697,7 +697,7 @@ def calc_toc11_new (gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en
                 toc_tot += spfkb
                 with open("TOC11-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat", 'w') as f:
                     writer = csv.writer(f, delimiter = '\t')
-                    writer.writerows(zip (interp_en-gwfermi, spfkb))
+                    writer.writerows(zip (interp_en-gwfermi, spfkb/wtk[ik]))
                 #outnamekb = "TOC11-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat"
                 #outfilekb = open(outnamekb,'w')
                 #en_toc11 = []
@@ -717,8 +717,8 @@ def calc_toc11_new (gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en
     outfile.close()
     return interp_en-gwfermi, toc_tot
 
-def calc_rc (bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
-                    eqp, Elda, scgw, encut, ims, invar_den, invar_eta, wtk):
+def calc_rc (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
+                    eqp, Elda, scgw, ims, invar_den, invar_eta, wtk):
     import numpy as np
     import pyfftw
     import csv
@@ -744,6 +744,11 @@ def calc_rc (bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
                 Elda_kb = eqp[ik, ib]
             else:
                 Elda_kb = Elda[ik, ib]
+
+            if scgw == 1:
+                xfermi = gwfermi
+            else:
+                xfermi = lda_fermi
             print("eqp:", eqp_kb)
             print("Elda:", Elda_kb)
             Done = False
@@ -837,7 +842,7 @@ def calc_rc (bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
             rc_tot += spfkb
             with open ("spf_rc-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat",'w') as f:
                 writer = csv.writer(f, delimiter = '\t')
-                writer.writerows(zip(interp_en, spfkb))
+                writer.writerows(zip(interp_en-gwfermi, spfkb/wtk[ik]))
             #spfkb = gw_list
             #toc_tot = [sum(i) for i in zip(toc_tot,gw_list)]
             #outnamekb = "spf_rc-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat"
@@ -857,4 +862,4 @@ def calc_rc (bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
     
             outfile.write("%8.4f %12.8e \n" % (newdx, norm))
     outfile.close()
-    return interp_en, rc_tot
+    return interp_en-gwfermi, rc_tot

@@ -301,8 +301,8 @@ if flag_calc_rc == 1:
    # cpu1=time.clock() - c0
    # print ("Starting time (elaps, cpu): %10.6e %10.6e"% (elaps1, cpu1))
     #print (" ### Calculation of exponential A(\omega)_TOC96..  ")
-    toten, spftot = calc_rc (bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
-                    eqp, Elda, scgw, encut, ims, invar_den, invar_eta, wtk) 
+    toten, spftot = calc_rc (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
+                    eqp, Elda, scgw, ims, invar_den, invar_eta, wtk) 
     print (" ### Writing out A(\omega)_rc...  ")
 
     outname = "spftot_rc"+"_s"+str(sfac)+"_p"+str(pfac)+"_"+str(penergy)+"ev"+".dat"
