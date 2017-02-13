@@ -22,11 +22,11 @@ if isfile("invar.in"):
         invar[word[-1]] = word[0]
         #print "invar:", invar
     infile.close()
-    if 'sigmafile' in invar:
+    if 'sigmafile' in invar:  ## The name of the self-energy file.
         sigfilename = invar['sigmafile'];
     else:
         sigfilename = 'default_SIG';
-    if 'flag_wtk' in invar:
+    if 'flag_wtk' in invar:   
         flag_wtk = int(invar['flag_wtk']);
     else:
         flag_wtk = 1;
@@ -176,7 +176,6 @@ else:
 
 en, res, ims = read_sigfile(sigfilename, nkpt, bdgw_min, bdgw_max, spin=0, nspin=0)
 
-
 bdrange = range(minband - bdgw_min, maxband - bdgw_min + 1)
 kptrange = range(minkpt - 1, maxkpt)
 
@@ -189,7 +188,7 @@ kptrange = range(minkpt - 1, maxkpt)
 ### ===================================================== ###
 print(" # ------------------------------------------------ # ")
 # Here we move to a subdirectory to avoid flooding-up the current directory
-newdirname = "Spfunctions_test"
+newdirname = "Spfunctions"
 origdir = getcwd() # remember where we are
 newdir = join(origdir, newdirname) # Complete path of the new directory
 print(" Moving into output directory:\n ", newdir)
@@ -244,8 +243,9 @@ if flag_calc_toc11 == 1:
         from sf_modules_spin import calc_toc11_spin
 
         print( "Calculating spin polarized TOC11 begins")
-        interp_en, toc_tot_up, toc_tot_down = calc_toc11_spin(bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax, 
-                                         eqp, encut, metal_valence, ims, invar_den, invar_eta, wtk)
+        interp_en, toc_tot_up, toc_tot_down = calc_toc11_spin(gwfermi,lda_fermi,bdrange, bdgw_min, kptrange,
+                        FFTtsize, en,enmin, enmax, eqp,Elda,scgw,Eplasmon, ims,
+                        invar_den, invar_eta, wtk, metal_valence)
         
         print(" ### Writing out A(\omega)_TOC11...  ")
 

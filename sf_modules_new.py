@@ -257,7 +257,8 @@ def calc_spf_gw(bdrange, kptrange, bdgw_min, wtk, en, enmin, enmax, res,
             with open("spf_gw-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat",
                  'w') as f:
                 writer = csv.writer(f, delimiter = '\t')
-                writer.writerows(zip (newen-gwfermi, spfkb/wtk[ik]))
+                writer.writerows(zip (newen-gwfermi, spfkb/wtk[ik],
+                                      redenom, tmpres, tmpim))
             #outnamekb = "spf_gw-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat"
             #outfilekb = open(outnamekb,'w')
             #for ien in xrange(np.size(newen)):
