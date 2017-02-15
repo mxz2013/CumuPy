@@ -19,124 +19,128 @@ This code is written according to abinit GW output. Thus all the inputs in the t
 
 The last file you need to provide is invar.in where you define what kind of calculation you want:
 
-    if 'sigmafile' in invar: ## the name of SIG file
+    if 'sigmafile' in invar:  ## The name of the self-energy file.
         sigfilename = invar['sigmafile'];
     else:
         sigfilename = 'default_SIG';
-    if 'flag_wtk' in invar:  ## include wtk or not
+    if 'flag_wtk' in invar:  ## using wtk.dat or not 
         flag_wtk = int(invar['flag_wtk']);
     else:
         flag_wtk = 1;
-    if 'scgw' in invar:   ## scGW self-energy is recommanded.
-        scgw = int(invar['scgw']);
+    if 'scgw' in invar:  #one-shot G0W0 or scGW self-energy
+        scgw = int(invar['scgw']); 
     else:
         scgw = 1;
-    if 'spin_on' in invar:  ## spin polarized or not
+    if 'spin_on' in invar: ## spin-polarized or not
         spin_on = int(invar['spin_on']);
     else:
         spin_on = 0;
-    if 'Eplasmon' in invar:  ## can be used to control the energy range of integrating \Sigma(\omega)
-        Eplasmon = int(invar['Eplasmon'])
+    if 'Eplasmon' in invar: # for advanced user, an estimation of integration
+        Eplasmon = int(invar['Eplasmon']) #range for C(t)
     else:
-        Eplasmon = 20
-    if 'minband' in invar:   ## the first band to be calculated. Note that the band number is consistent with abinit
+        Eplasmon = 50
+    if 'minband' in invar: #the first band to be calculated
         minband = int(invar['minband'])
     else:
         minband=1
-    if 'maxband' in invar:   ## the last band to be calculated. Note that the band number is consistent with abinit
+    if 'maxband' in invar:  # the last band to be calculated
         maxband = int(invar['maxband'])
     else:
         maxband = 1
-    if 'minkpt' in invar: ## the first k point to be calculated 
+    if 'bdgw_min' in invar: # the label of the first band in SIG file.
+        bdgw_min = int(invar['bdgw_min']) # consistent with input of abinit:bdgw 
+    else:
+    	bdgw_min = 1
+    if 'bdgw_max' in invar:  # the label of the first band in SIG file.
+        bdgw_max = int(invar['bdgw_max']) # consistent with input of abinit:bdgw
+    else:
+    	bdgw_max = 1
+    if 'minkpt' in invar: # the first k to be calculated
         minkpt = int(invar['minkpt'])
     else:
     	minkpt = 1
-    if 'maxkpt' in invar:  ## the last k point to be calculated
+    if 'maxkpt' in invar:
     	maxkpt = int(invar['maxkpt'])
     else:
-    	maxkpt = 1
-    if 'nkpt' in invar:  # total number of k points in SIG file 
+    	maxkpt = 1  # the last k to be calculated
+    if 'nkpt' in invar:
     	nkpt = int(invar['nkpt'])
     else:
     	nkpt = maxkpt - minkpt + 1
-    if 'enmin' in invar: # the minimum energy in cumulant spf
+    if 'enmin' in invar: # the minimum \omega in A(\omega)
     	enmin = float(invar['enmin'])
     else:
     	enmin = -20.0
-    if 'enmax' in invar:  # the minimum energy in cumulant spf
+    if 'enmax' in invar: # the maximum \omega in A(\omega)
     	enmax = float(invar['enmax'])
     else:
     	enmax = 0.0 
     
-    if 'sfactor' in invar: # not implenmented yet
+    if 'sfactor' in invar: # not implemented yet
     	sfac = float(invar['sfactor'])
     else:
     	sfac=1.0
-    if 'pfactor' in invar: # not implenmented yet
+    if 'pfactor' in invar:  # not implemented yet
     	pfac = float(invar['pfactor'])
     else:
     	pfac=1.0
-    if 'penergy' in invar: # not implenmented yet
+    if 'penergy' in invar: # not implemented yet
     	penergy = int(invar['penergy'])
     else:
     	penergy = 0
-    if 'calc_gw' in invar: ## calculate GW spf
+    if 'extinf' in invar:  # not implemented yet
+        extinf = float(invar['extinf']);
+    else:
+        extinf = 0
+    if 'calc_gw' in invar:  #enable GW calculation
     	flag_calc_gw = int(invar['calc_gw'])
     else:
     	flag_calc_gw = 0
-    if 'calc_toc11' in invar:  ## the cumulant of Matteo Guzzo in prl 2011
+    if 'calc_toc11' in invar: #enable TOC11 calculation
     	flag_calc_toc11 = int(invar['calc_toc11'])
     else:
     	flag_calc_toc11 = 0
     
-    if 'calc_rc' in invar:  ## Josh's retarded cumulant 
+    if 'calc_rc' in invar: # enable retarded cumulant calculation
     	flag_calc_rc = int(invar['calc_rc'])
     else:
     	iflag_calc_rc = 0
     
-    if 'calc_crc' in invar:  ## constraint retarded cumulant in my thesis
-    	flag_calc_crc = int(invar['calc_crc'])
+    if 'calc_crc' in invar: #enable CRC so as TOC96 calculation
+    	flag_calc_crc = int(invar['calc_crc']) # CRC implementation is not
+                                            #ready yet!!
     else:
     	flag_calc_crc = 0
-    if 'efermi' in invar:  ## Fermi energy calculated according to QP of abinit code.
-        efermi = float(invar['efermi']);
+    if 'gwfermi' in invar: #Fermi enegy after GW calculation
+        gwfermi = float(invar['gwfermi']);
     else:
-        efermi = 0.0
-    if 'lda_fermi' in invar:  ## lda fermi energy, this is required when scgw=0, i.e. G0W0 self-energy
-        lda_fermi = float(invar['lda_fermi']);
-    else:
+        gwfermi = 0.0
+    if 'lda_fermi' in invar: # Fermi energy after LDA calculation
+        lda_fermi = float(invar['lda_fermi']); # will be used
+    else:                                    #when scgw=0
         lda_fermi = 0.0
-    if 'invar_den' in invar: ## the energy resolution of cumulant spf which is also a convergent parameter
-    	invar_den = float(invar['invar_den'])
-    else:
+    if 'invar_den' in invar: #d\omega in the cumulant A(\omega) 
+    	invar_den = float(invar['invar_den']) # for the moment the choices 
+    else:                                 # are 0.05, 0.025, 0.0125, 0.01,0.005
     	invar_den = 0.05
-    if 'metal_valence' in invar: # if you are calculating metal valence, the TOC formula is a bit different.
-        metal_valence = float(invar['metal_valence'])
+    if 'metal_valence' in invar: # TOC for metal valence is implemented
+        metal_valence = float(invar['metal_valence']) #different with core
     else:
         metal_valence = 0
-    if 'invar_eta' in invar:  # the broadening of cumulant spf.
+    if 'invar_eta' in invar: #lorentzian broadening of all cumulant A(\omega)
         invar_eta = float(invar['invar_eta'])
     else:
         invar_eta = 0.2
         
-    if 'FFTtsize' in invar:  # the size of FFT. Main parameter to be converged.
+    if 'FFTtsize' in invar: #the number of time steps used in FFT
         FFTtsize = int(invar['FFTtsize'])
         if FFTtsize % 2 != 0:
             FFTtsize = FFTtsize+1
     else:
         FFTtsize = 5000
     
-    if 'bdgw_min' in invar: #should be consistent with abinit code, bdgw
-    	bdgw_min = int(invar['bdgw_min'])
-    else:
-    	bdgw_min = 1
-    if 'bdgw_max' in invar: ##should be consistent with abinit code, bdgw
-    	bdgw_max = int(invar['bdgw_max'])
-    else:
-    	bdgw_max = 1
-    if 'abinit_eqp' in invar: ## use abinit eqp or not, if 0, we recalculate eqp by find zero crossing.
-    	abinit_eqp = int(invar['abinit_eqp'])
+    if 'abinit_eqp' in invar: # use eqp from abinit or recalculated
+    	abinit_eqp = int(invar['abinit_eqp']) #in this code.
     else:
     	abinit_eqp = 0 
-
 
