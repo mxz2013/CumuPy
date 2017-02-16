@@ -66,10 +66,8 @@ if isfile("invar.in"):
     	maxkpt = int(invar['maxkpt'])
     else:
     	maxkpt = 1  # the last k to be calculated
-    if 'nkpt' in invar and nspin == 1:
-    	nkpt = int(invar['nkpt'])
-    elif 'nkpt' in invar and nspin == 2:
-        nkpt = 2*int(invar['nkpt'])
+    if 'nkpt' in invar:
+    	nkpt = int(invar['nkpt'])*nspin
     else:
     	nkpt = maxkpt - minkpt + 1
     if 'enmin' in invar: # the minimum \omega in A(\omega)

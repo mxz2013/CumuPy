@@ -31,10 +31,10 @@ The last file you need to provide is invar.in where you define what kind of calc
         scgw = int(invar['scgw']); 
     else:
         scgw = 1;
-    if 'spin_on' in invar: ## spin-polarized or not
-        spin_on = int(invar['spin_on']);
+    if 'nspin' in invar: ## spin-polarized or not
+        nspin = int(invar['nspin']);
     else:
-        spin_on = 0;
+        nspin = 1;
     if 'Eplasmon' in invar: # for advanced user, an estimation of integration
         Eplasmon = int(invar['Eplasmon']) #range for C(t)
     else:
@@ -64,7 +64,7 @@ The last file you need to provide is invar.in where you define what kind of calc
     else:
     	maxkpt = 1  # the last k to be calculated
     if 'nkpt' in invar:
-    	nkpt = int(invar['nkpt'])
+    	nkpt = int(invar['nkpt'])*nspin
     else:
     	nkpt = maxkpt - minkpt + 1
     if 'enmin' in invar: # the minimum \omega in A(\omega)
