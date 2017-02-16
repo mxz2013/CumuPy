@@ -1,10 +1,10 @@
 out_gw_DS1_SIG     # sigmafile
 1   # scgw
 0   # metal_valence 
-1   # spin_on
+2   # nspin
 1           # minkpt
-40          # maxkpt
-40     # nkpt
+20          # maxkpt
+20     # nkpt
 9           # minband
 28          # maxband
 9       # bdgw_min

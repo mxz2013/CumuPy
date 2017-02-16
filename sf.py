@@ -34,10 +34,10 @@ if isfile("invar.in"):
         scgw = int(invar['scgw']); 
     else:
         scgw = 1;
-    if 'spin_on' in invar: ## spin-polarized or not
-        spin_on = int(invar['spin_on']);
+    if 'nspin' in invar: ## spin-polarized or not
+        nspin = int(invar['nspin']);
     else:
-        spin_on = 0;
+        spin_on = 1;
     if 'Eplasmon' in invar: # for advanced user, an estimation of integration
         Eplasmon = int(invar['Eplasmon']) #range for C(t)
     else:
@@ -66,8 +66,10 @@ if isfile("invar.in"):
     	maxkpt = int(invar['maxkpt'])
     else:
     	maxkpt = 1  # the last k to be calculated
-    if 'nkpt' in invar:
+    if 'nkpt' in invar and nspin == 1:
     	nkpt = int(invar['nkpt'])
+    elif 'nkpt' in invar and nspin == 2:
+        nkpt = 2*int(invar['nkpt'])
     else:
     	nkpt = maxkpt - minkpt + 1
     if 'enmin' in invar: # the minimum \omega in A(\omega)
@@ -175,10 +177,13 @@ else:
          """)
     wtk = [1]*nkpt
 
-en, res, ims = read_sigfile(sigfilename, nkpt, bdgw_min, bdgw_max, spin=0, nspin=0)
+en, res, ims = read_sigfile(sigfilename, nkpt, bdgw_min, bdgw_max)
 
-bdrange = range(minband - bdgw_min, maxband - bdgw_min + 1)
-kptrange = range(minkpt - 1, maxkpt)
+bdrange = xrange(minband - bdgw_min, maxband - bdgw_min + 1)
+if nspin == 1:
+    kptrange = xrange(minkpt - 1, maxkpt)
+else:
+    kptrange = xrange(minkpt - 1, 2*maxkpt)
 
 ### ===================================================== ###
 #give the option of using abinit QP energies of the QP energies 
@@ -201,20 +206,18 @@ if abinit_eqp == 1:
     eqp_abinit = read_eqp_abinit()
     eqp = eqp_abinit
 else:
-    eqp, imeqp = calc_eqp_imeqp(bdrange,kptrange, en, enmin, enmax, res, ims,
+    eqp, imeqp = calc_eqp_imeqp(bdrange,kptrange,bdgw_min, en, enmin, enmax, res, ims,
                                 hartree, gwfermi, nkpt, nband, scgw, Elda)
 ### ================================= ###
 ### ===== GW SPECTRAL FUNCTION ====== ###
 # GW spectral function part
 t_pregw = time.time() 
-print("the spin option is", spin_on)
 if flag_calc_gw == 1:
-    if spin_on == 1:
+    if nspin == 2:
         from sf_modules_spin import calc_spf_gw_spin
         newen, spftot_up, spftot_down = calc_spf_gw_spin(bdrange, kptrange,
                                                          bdgw_min, wtk, en, enmin, enmax,
                                                          res,ims, hartree, gwfermi)
-            ### ==== WRITING OUT GW SPECTRAL FUNCTION === ###
         print(" ### Writing out A(\omega)_GW...  ")
         outname = "spftot_gw"+"_s"+str(sfac)+"_p"+str(pfac)+"_"+str(penergy)+"ev"+".dat"
         outfile = open(outname,'w')
@@ -226,10 +229,9 @@ if flag_calc_gw == 1:
         plt.plot(newen,spftot_up,label="ftot_gw_SpinUp")
        # plt.plot( newen,spftot_down,label="ftot_gw_SpinDown")
 
-    elif spin_on == 0:
+    elif nspin == 1:
         newen, spftot = calc_spf_gw(bdrange, kptrange, bdgw_min, wtk, en, enmin, enmax, res,
                     ims, hartree, gwfermi, invar_eta)
-            ### ==== WRITING OUT GW SPECTRAL FUNCTION === ###
         print(" ### Writing out A(\omega)_GW...  ")
         outname = "spftot_gw"+"_s"+str(sfac)+"_p"+str(pfac)+"_"+str(penergy)+"ev"+".dat"
         outfile = open(outname,'w')
@@ -240,7 +242,7 @@ if flag_calc_gw == 1:
         plt.plot(newen,spftot,label="ftot_gw");
 
 if flag_calc_toc11 == 1:
-    if spin_on == 1: 
+    if nspin == 2: 
         from sf_modules_spin import calc_toc11_spin
 
         print( "Calculating spin polarized TOC11 begins")

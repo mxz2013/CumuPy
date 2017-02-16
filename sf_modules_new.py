@@ -97,7 +97,7 @@ def read_wtk():
         sys.exit(1)
     return wtk
 
-def read_sigfile(sigfilename, nkpt, bdgw_min, bdgw_max, spin=0, nspin=0):
+def read_sigfile(sigfilename, nkpt, bdgw_min, bdgw_max):
     """
     this function reads _SIG file of abinit GW calculation
     and return the real and imaag part of self-energy for 
@@ -187,16 +187,17 @@ def read_sigfile(sigfilename, nkpt, bdgw_min, bdgw_max, spin=0, nspin=0):
             x = np.genfromtxt(sigfilename,usecols = range(1,num_cols), filling_values = 'myNaN')
     #nkpt = int(invar_dict['nkpt'])
     print("nkpt:",nkpt)
-    print("spin:",spin)
-    print("nspin:",nspin)
+    #print("spin:",spin)
+    #print("nspin:",nspin)
     # From a long line to a proper 2D array, then only first row
     #print(xen.shape)
     print("x.shape", x.shape)
-    if spin == 1 and nspin == 0:
-        nspin = 2
-    else:
-        nspin = 1
-    print("nspin:",nspin)
+    #if spin == 1 and nspin == 0:
+    #    nspin = 2
+    #else:
+    #    nspin = 1
+    #print("nspin:",nspin)
+    nspin = 1
     print("size(xen):",xen.size)
     print("The size of a single energy array should be",\
             float(np.size(xen))/nkpt/nspin)
@@ -222,7 +223,7 @@ def read_sigfile(sigfilename, nkpt, bdgw_min, bdgw_max, spin=0, nspin=0):
 
     return en, res, ims 
 
-def calc_spf_gw(bdrange, kptrange, bdgw_min, wtk, en, enmin, enmax, res,
+def calc_spf_gw(nspin,bdrange, kptrange, bdgw_min, wtk, en, enmin, enmax, res,
                 ims, hartree, gwfermi, invar_eta):
     import numpy as np;
     import csv
@@ -299,8 +300,8 @@ def find_eqp_resigma(en, resigma, gwfermi):
     if tmpeqp - gwfermi > tol_fermi: 
         tmpeqp=zeros[0]
     if nzeros==0 : 
-        print()
-        print (" WARNING: No eqp found! ")
+        #print()
+        #print (" WARNING: No eqp found! ")
         def fit_func(x, a, b): 
             return a*x + b
         from scipy.optimize import curve_fit
@@ -315,7 +316,7 @@ def find_eqp_resigma(en, resigma, gwfermi):
    #     print(" WARNING: Plasmarons")
     return tmpeqp, nzeros
 
-def calc_eqp_imeqp(bdrange, kptrange, en,enmin, enmax, res, ims, hartree, gwfermi, nkpt, nband, scgw, Elda):
+def calc_eqp_imeqp(bdrange, kptrange,bdgw_min, en,enmin, enmax, res, ims, hartree, gwfermi, nkpt, nband, scgw, Elda):
     """
     This function calculates qp energies and corresponding
     values of the imaginary part of sigma for a set of
@@ -323,6 +324,7 @@ def calc_eqp_imeqp(bdrange, kptrange, en,enmin, enmax, res, ims, hartree, gwferm
     The function find_eqp_resigma() is used here.
     eqp and imeqp are returned. 
     """
+    import csv
     from scipy import interp
     eqp = np.zeros((nkpt,nband))
     imeqp = np.zeros((nkpt,nband))
@@ -336,20 +338,25 @@ def calc_eqp_imeqp(bdrange, kptrange, en,enmin, enmax, res, ims, hartree, gwferm
     #for ik in kptrange:
     #    for ib in bdrange:
     for ik in xrange(nkpt):
+        ikeff = ik + 1
         for ib in xrange(nband):
+            ibeff = ib + bdgw_min
             interpres = interp1d(en, res[ik,ib], kind = 'linear', axis = -1)
-            #temparray = np.array(en - hartree[ik,ib] - res[ik,ib])
             tmpres = interpres(newen)
             temparray = np.array(newen - hartree[ik,ib] - tmpres)
+            #temparray = newen - hartree[ik,ib] - tmpres
+            
+            #with open("ShiftReSigma"+str("%02d"%(ik))+"-b"+str("%02d"%(ib))+".dat", 'w') as f:
+            #    writer = csv.writer(f, delimiter = '\t')
+            #    writer.writerows(zip (newen-gwfermi, temparray))
+            
             interpims = interp1d(en, ims[ik,ib], kind = 'linear', axis = -1)
             tempim = interpims(newen)
             # New method to overcome plasmaron problem
             eqp[ik,ib], nzeros = find_eqp_resigma(newen,temparray,gwfermi)
             if nzeros==0: 
-                print()
-                print(" WARNING: ik "+str(ik)+" ib "+str(ib)+". No eqp found!!!")
+                print("WARNING NO QP at ik, ib:", ikeff, ibeff)
             if (eqp[ik,ib] > newen[0]) and (eqp[ik,ib] < newen[-1]): 
-                #print(en[0], eqp[ik,ib], en[-1])
                 if scgw == 1:
                     Elda_kb = eqp[ik,ib]
                 else:
@@ -461,7 +468,6 @@ def calc_crc (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmi
                 NewEn = np.asarray(NewEn)
                 NewEn_greater = np.arange(NewEn_max+1, NewEn_max_crc, newdx)
                 NewEn_crc =  np.arange(NewEn_min, NewEn_max_crc, newdx)
-                print("SKYDEBUG NewEn_crc", NewEn_crc[0], NewEn_crc[-1])
                 NewEn_size = len(NewEn)
                 if NewEn[-1]>=0 and NewEn_size == len(NewEn_0):
                     print("""Zero is not in the intergration of ImSigma(w),
