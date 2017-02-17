@@ -366,7 +366,7 @@ def calc_eqp_imeqp(wtk,bdrange, kptrange,bdgw_min, en,enmin, enmax, res, ims, ha
                 qpspfkb =  abs(imeqp[ik,ib])/np.pi/((newen-eqp[ik,ib])**2 + imeqp[ik,ib]**2)
                 qpspftot += qpspfkb*wtk[ik]
             
-            with open("spf_qp"+"-ik"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat", 'w') as f:
+            with open("spf_qp"+"-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat", 'w') as f:
                 writer = csv.writer(f, delimiter = '\t')
                 writer.writerows(zip (newen-gwfermi, qpspfkb))
           #  else:
