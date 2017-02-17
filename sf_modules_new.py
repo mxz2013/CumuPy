@@ -223,7 +223,7 @@ def read_sigfile(sigfilename, nkpt, bdgw_min, bdgw_max):
 
     return en, res, ims 
 
-def calc_spf_gw(nspin,bdrange, kptrange, bdgw_min, wtk, en, enmin, enmax, res,
+def calc_spf_gw(bdrange, kptrange, bdgw_min, wtk, en, enmin, enmax, res,
                 ims, hartree, gwfermi, invar_eta):
     import numpy as np;
     import csv
@@ -316,7 +316,7 @@ def find_eqp_resigma(en, resigma, gwfermi):
    #     print(" WARNING: Plasmarons")
     return tmpeqp, nzeros
 
-def calc_eqp_imeqp(bdrange, kptrange,bdgw_min, en,enmin, enmax, res, ims, hartree, gwfermi, nkpt, nband, scgw, Elda):
+def calc_eqp_imeqp(wtk,bdrange, kptrange,bdgw_min, en,enmin, enmax, res, ims, hartree, gwfermi, nkpt, nband, scgw, Elda):
     """
     This function calculates qp energies and corresponding
     values of the imaginary part of sigma for a set of
@@ -335,6 +335,7 @@ def calc_eqp_imeqp(bdrange, kptrange,bdgw_min, en,enmin, enmax, res, ims, hartre
     outfile3 = open(outname,'w')
     newdx = 0.005
     newen = np.arange(en[0], en[-1], newdx)
+    qpspftot = np.zeros((np.size(newen)))
     #for ik in kptrange:
     #    for ib in bdrange:
     for ik in xrange(nkpt):
@@ -362,6 +363,12 @@ def calc_eqp_imeqp(bdrange, kptrange,bdgw_min, en,enmin, enmax, res, ims, hartre
                 else:
                     Elda_kb = Elda[ik,ib]
                 imeqp[ik,ib] = interpims(Elda_kb)
+                qpspfkb =  abs(imeqp[ik,ib])/np.pi/((newen-eqp[ik,ib])**2 + imeqp[ik,ib]**2)
+                qpspftot += qpspfkb*wtk[ik]
+            
+            with open("spf_qp"+"-ik"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat", 'w') as f:
+                writer = csv.writer(f, delimiter = '\t')
+                writer.writerows(zip (newen-gwfermi, qpspfkb))
           #  else:
           #      imeqp[ik,ib] = interp(eqp[ik,ib], en, ims[ik,ib])
           #  ## Warning if imaginary part of sigma < 0 (Convergence problems?)
@@ -376,6 +383,10 @@ def calc_eqp_imeqp(bdrange, kptrange,bdgw_min, en,enmin, enmax, res, ims, hartre
         outfile3.write("\n")
     outfile2.close()
     outfile3.close()
+
+    with open("spftot_qp.dat", 'w') as f:
+        writer = csv.writer(f, delimiter = '\t')
+        writer.writerows(zip (newen-gwfermi, qpspftot))
     return eqp, imeqp
 
 def A_model_crc(x,eqpkb,beta1, beta2,wp, eta_crc):

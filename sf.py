@@ -37,7 +37,7 @@ if isfile("invar.in"):
     if 'nspin' in invar: ## spin-polarized or not
         nspin = int(invar['nspin']);
     else:
-        spin_on = 1;
+        nspin = 1;
     if 'Eplasmon' in invar: # for advanced user, an estimation of integration
         Eplasmon = int(invar['Eplasmon']) #range for C(t)
     else:
@@ -188,6 +188,16 @@ else:
 ## recalculate from cumulant code by finding zero crossing
 ## of the shifted Re\Sigma
 
+#newdirname = "QP_SPF"
+#origdir = getcwd() # remember where we are
+#newdir = join(origdir, newdirname) # Complete path of the new directory
+#print(" Moving into output directory:\n ", newdir)
+#if not isdir(newdir) :
+#    mkdir(newdir)
+
+
+#print ("Moving back to parent directory:\n", origdir)
+#chdir(newdir)
 # ======== READING _SIG FILE ======= #
 ### ===================================================== ###
 print(" # ------------------------------------------------ # ")
@@ -204,7 +214,7 @@ if abinit_eqp == 1:
     eqp_abinit = read_eqp_abinit()
     eqp = eqp_abinit
 else:
-    eqp, imeqp = calc_eqp_imeqp(bdrange,kptrange,bdgw_min, en, enmin, enmax, res, ims,
+    eqp, imeqp = calc_eqp_imeqp(wtk,bdrange,kptrange,bdgw_min, en, enmin, enmax, res, ims,
                                 hartree, gwfermi, nkpt, nband, scgw, Elda)
 ### ================================= ###
 ### ===== GW SPECTRAL FUNCTION ====== ###
