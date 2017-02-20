@@ -18,7 +18,7 @@ from os import getcwd, pardir, mkdir, chdir
 
 def read_eqp_abinit():
     import numpy as np;
-    if isfile("eqp_abinit.dat"):
+    if isfile('eqp_abinit.dat'):
         print(" Reading file eqp_abinit.dat... ")
         eqpfile = open("eqp_abinit.dat");
         eqp_abinit = [];
@@ -364,7 +364,7 @@ def calc_eqp_imeqp(wtk,bdrange, kptrange,bdgw_min, en,enmin, enmax, res, ims, ha
                     Elda_kb = Elda[ik,ib]
                 imeqp[ik,ib] = interpims(Elda_kb)
                 qpspfkb =  abs(imeqp[ik,ib])/np.pi/((newen-eqp[ik,ib])**2 + imeqp[ik,ib]**2)
-                qpspftot += qpspfkb*wtk[ik]
+                qpspftot += qpspfkb*wtk[int(ik/2)]
             
             with open("spf_qp"+"-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat", 'w') as f:
                 writer = csv.writer(f, delimiter = '\t')
@@ -616,8 +616,8 @@ def calc_toc11_new (gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en
                 xfermi = gwfermi 
             else:
                 xfermi = lda_fermi 
-            print("eqp:", eqp_kb)
-            print("Elda:", Elda_kb)
+            print("eqp:", eqp_kb-gwfermi)
+            print("Elda:", Elda_kb-xfermi)
             print("xfermi:", xfermi)
             if Elda_kb - xfermi <= tol_fermi:
                 Done = False
@@ -767,8 +767,8 @@ def calc_rc (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin
                 xfermi = gwfermi
             else:
                 xfermi = lda_fermi
-            print("eqp:", eqp_kb)
-            print("Elda:", Elda_kb)
+            print("eqp:", eqp_kb-gwfermi)
+            print("Elda:", Elda_kb-xfermi)
             Done = False
             Es2 = 0
             while not Done:

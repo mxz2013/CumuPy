@@ -5,6 +5,7 @@ import numpy as np;
 import matplotlib.pylab as plt;
 plt.figure(1)
 import sys
+import csv
 from os.path import isfile, join, isdir
 from os import getcwd, pardir, mkdir, chdir
 import time
@@ -150,6 +151,9 @@ else :
     print ("Invar file not found (invar.in). Impossible to continue.")
     sys.exit(1)
 print ("Reading invar done.")
+#print(" "+"===="+" Input variables "+"====")
+#print()
+
 nband = bdgw_max - bdgw_min + 1
 hartree = read_hartree()
 
@@ -178,10 +182,11 @@ else:
 en, res, ims = read_sigfile(sigfilename, nkpt, bdgw_min, bdgw_max)
 
 bdrange = xrange(minband - bdgw_min, maxband - bdgw_min + 1)
-if nspin == 1:
-    kptrange = xrange(minkpt - 1, maxkpt)
-else:
-    kptrange = xrange(minkpt - 1, 2*maxkpt)
+#if nspin == 1:
+#    kptrange = xrange(minkpt - 1, maxkpt)
+#else:
+#    kptrange = xrange(minkpt - 1, 2*maxkpt)
+kptrange = xrange(minkpt - 1, maxkpt*nspin)
 
 ### ===================================================== ###
 #give the option of using abinit QP energies of the QP energies 
@@ -213,9 +218,13 @@ chdir(newdir)
 if abinit_eqp == 1:   
     eqp_abinit = read_eqp_abinit()
     eqp = eqp_abinit
+    with open("eqp_abinit.dat", 'w') as f:
+        writer = csv.writer(f, delimiter = '\t')
+        writer.writerows(zip (eqp-gwfermi))
 else:
     eqp, imeqp = calc_eqp_imeqp(wtk,bdrange,kptrange,bdgw_min, en, enmin, enmax, res, ims,
                                 hartree, gwfermi, nkpt, nband, scgw, Elda)
+
 ### ================================= ###
 ### ===== GW SPECTRAL FUNCTION ====== ###
 # GW spectral function part
