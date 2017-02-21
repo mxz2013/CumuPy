@@ -371,7 +371,6 @@ def calc_eqp_imeqp(spf_qp, wtk,bdrange, kptrange,bdgw_min, en,enmin, enmax, res,
                     writer = csv.writer(f, delimiter = '\t')
                     writer.writerows(zip (newen-gwfermi, qpspfkb))
 
-            print("QP spectra calculation done!")
           #  else:
           #      imeqp[ik,ib] = interp(eqp[ik,ib], en, ims[ik,ib])
           #  ## Warning if imaginary part of sigma < 0 (Convergence problems?)
@@ -390,6 +389,7 @@ def calc_eqp_imeqp(spf_qp, wtk,bdrange, kptrange,bdgw_min, en,enmin, enmax, res,
     with open("spftot_qp.dat", 'w') as f:
         writer = csv.writer(f, delimiter = '\t')
         writer.writerows(zip (newen-gwfermi, qpspftot))
+    print("QP spectra calculation done!")
     return eqp, imeqp
 
 def A_model_crc(x,eqpkb,beta1, beta2,wp, eta_crc):
