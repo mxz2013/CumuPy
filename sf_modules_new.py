@@ -18,9 +18,9 @@ from os import getcwd, pardir, mkdir, chdir
 
 def read_eqp_abinit():
     import numpy as np;
-    if isfile('eqp_abinit.dat'):
+    if isfile('../eqp_abinit.dat'):
         print(" Reading file eqp_abinit.dat... ")
-        eqpfile = open("eqp_abinit.dat");
+        eqpfile = open("../eqp_abinit.dat");
         eqp_abinit = [];
         for line in eqpfile.readlines():
             eqp_abinit.append(map(float,line.split()));
@@ -316,7 +316,7 @@ def find_eqp_resigma(en, resigma, gwfermi):
    #     print(" WARNING: Plasmarons")
     return tmpeqp, nzeros
 
-def calc_eqp_imeqp(wtk,bdrange, kptrange,bdgw_min, en,enmin, enmax, res, ims, hartree, gwfermi, nkpt, nband, scgw, Elda):
+def calc_eqp_imeqp(spf_qp, wtk,bdrange, kptrange,bdgw_min, en,enmin, enmax, res, ims, hartree, gwfermi, nkpt, nband, scgw, Elda):
     """
     This function calculates qp energies and corresponding
     values of the imaginary part of sigma for a set of
@@ -363,12 +363,15 @@ def calc_eqp_imeqp(wtk,bdrange, kptrange,bdgw_min, en,enmin, enmax, res, ims, ha
                 else:
                     Elda_kb = Elda[ik,ib]
                 imeqp[ik,ib] = interpims(Elda_kb)
+            if spf_qp == 1:
+                print("Calculating the QP spectra::")
                 qpspfkb =  abs(imeqp[ik,ib])/np.pi/((newen-eqp[ik,ib])**2 + imeqp[ik,ib]**2)
                 qpspftot += qpspfkb*wtk[int(ik/2)]
-            
-            with open("spf_qp"+"-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat", 'w') as f:
-                writer = csv.writer(f, delimiter = '\t')
-                writer.writerows(zip (newen-gwfermi, qpspfkb))
+                with open("spf_qp"+"-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat", 'w') as f:
+                    writer = csv.writer(f, delimiter = '\t')
+                    writer.writerows(zip (newen-gwfermi, qpspfkb))
+
+            print("QP spectra calculation done!")
           #  else:
           #      imeqp[ik,ib] = interp(eqp[ik,ib], en, ims[ik,ib])
           #  ## Warning if imaginary part of sigma < 0 (Convergence problems?)

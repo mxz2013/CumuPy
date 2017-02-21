@@ -100,6 +100,11 @@ if isfile("invar.in"):
     	flag_calc_gw = int(invar['calc_gw'])
     else:
     	flag_calc_gw = 0
+    if 'spf_qp' in invar:  #enable GW calculation
+    	spf_qp = int(invar['spf_qp'])
+    else:
+    	spf_qp = 0
+
     if 'calc_toc11' in invar: #enable TOC11 calculation
     	flag_calc_toc11 = int(invar['calc_toc11'])
     else:
@@ -222,7 +227,7 @@ if abinit_eqp == 1:
         writer = csv.writer(f, delimiter = '\t')
         writer.writerows(zip (eqp-gwfermi))
 else:
-    eqp, imeqp = calc_eqp_imeqp(wtk,bdrange,kptrange,bdgw_min, en, enmin, enmax, res, ims,
+    eqp, imeqp = calc_eqp_imeqp(spf_qp,wtk,bdrange,kptrange,bdgw_min, en, enmin, enmax, res, ims,
                                 hartree, gwfermi, nkpt, nband, scgw, Elda)
 
 ### ================================= ###

@@ -1,5 +1,5 @@
 # Cumulant_SPF
-A python code to compute the cumulante expansion of the Green's function for theoretical spectroscopy.
+A python code to compute the cumulant expansion of the Green's function for theoretical spectroscopy.
 
 The code is written based on the cumulant code of Dr. Matteo Guzzo.
 
@@ -96,6 +96,10 @@ The last file you need to provide is invar.in where you define what kind of calc
     	flag_calc_gw = int(invar['calc_gw'])
     else:
     	flag_calc_gw = 0
+    if 'spf_qp' in invar:  #enable QP spectra calculation
+    	spf_qp = int(invar['spf_qp'])
+    else:
+    	spf_qp = 0
     if 'calc_toc11' in invar: #enable TOC11 calculation
     	flag_calc_toc11 = int(invar['calc_toc11'])
     else:
@@ -104,7 +108,7 @@ The last file you need to provide is invar.in where you define what kind of calc
     if 'calc_rc' in invar: # enable retarded cumulant calculation
     	flag_calc_rc = int(invar['calc_rc'])
     else:
-    	iflag_calc_rc = 0
+    	flag_calc_rc = 0
     
     if 'calc_crc' in invar: #enable CRC so as TOC96 calculation
     	flag_calc_crc = int(invar['calc_crc']) # CRC implementation is not
