@@ -107,7 +107,7 @@ def calc_toc11_spin (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize,
                 else:
                     xfermi = lda_fermi 
                 print("eqp:", eqp_kb-gwfermi)
-                print("Elda:", Elda_kb-x_fermi)
+                print("Elda:", Elda_kb-xfermi)
                 print("xfermi:", xfermi)
                 if Elda_kb - xfermi <= tol_fermi:
                     Done = False
