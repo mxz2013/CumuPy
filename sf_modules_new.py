@@ -370,7 +370,6 @@ def calc_eqp_imeqp(spf_qp, wtk,bdrange, kptrange,bdgw_min, en,enmin, enmax, res,
                 with open("spf_qp"+"-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat", 'w') as f:
                     writer = csv.writer(f, delimiter = '\t')
                     writer.writerows(zip (newen-gwfermi, qpspfkb))
-
           #  else:
           #      imeqp[ik,ib] = interp(eqp[ik,ib], en, ims[ik,ib])
           #  ## Warning if imaginary part of sigma < 0 (Convergence problems?)
@@ -402,9 +401,9 @@ def A_model_crc(x,eqpkb,beta1, beta2,wp, eta_crc):
         m += 1
     return (1.0/(math.pi))*abs(G.imag)
 
-def calc_crc (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
-                    eqp,imeqp, Elda, scgw, Eplasmon, ims, invar_den,
-                    invar_eta, wtk, metal_valence):
+def calc_crc (gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
+                    eqp, Elda, scgw, Eplasmon, ims, invar_den,
+                    invar_eta, wtk, metal_valence, imeqp):
     import numpy as np
     import pyfftw
     from numpy.fft import fftshift,fftfreq
@@ -436,8 +435,6 @@ def calc_crc (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmi
                 xfermi = gwfermi
             else:
                 xfermi = lda_fermi
-            print("eqp:", eqp_kb)
-            print("Elda:", Elda_kb)
             if Elda_kb - xfermi  <= tol_fermi:
                 Done = False
                 Es2 = 0

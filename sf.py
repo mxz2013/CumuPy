@@ -303,10 +303,10 @@ if flag_calc_toc11 == 1:
 if flag_calc_crc ==1:       
     print("Calulating CRC begins::")
     
-    interp_en, toc_tot, crc_tot = calc_crc(bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax, 
-                                         eqp,imeqp, Elda,scgw, Eplasmon, ims,
+    interp_en, toc_tot, crc_tot = calc_crc(gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax, 
+                                         eqp, Elda,scgw, Eplasmon, ims,
                                             invar_den, invar_eta, wtk,
-                                            metal_valence)
+                                            metal_valence, imeqp)
 
     print(" ### Writing out A(\omega)_TOC96 and CRC...  ")
     outname = "spftot_toc+crc"+"_s"+str(sfac)+"_p"+str(pfac)+"_"+str(penergy)+"ev"+".dat"
