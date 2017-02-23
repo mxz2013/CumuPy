@@ -326,6 +326,7 @@ def calc_eqp_imeqp(spf_qp, wtk,bdrange, kptrange,bdgw_min, en,enmin, enmax, res,
     """
     import csv
     from scipy import interp
+    print("Calculating the QP energies::")
     eqp = np.zeros((nkpt,nband))
     imeqp = np.zeros((nkpt,nband))
     hartree = np.array(hartree)
@@ -364,7 +365,6 @@ def calc_eqp_imeqp(spf_qp, wtk,bdrange, kptrange,bdgw_min, en,enmin, enmax, res,
                     Elda_kb = Elda[ik,ib]
                 imeqp[ik,ib] = interpims(Elda_kb)
             if spf_qp == 1:
-                print("Calculating the QP spectra::")
                 qpspfkb =  abs(imeqp[ik,ib])/np.pi/((newen-eqp[ik,ib])**2 + imeqp[ik,ib]**2)
                 qpspftot += qpspfkb*wtk[int(ik/2)]
                 with open("spf_qp"+"-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat", 'w') as f:
