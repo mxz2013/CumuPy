@@ -127,7 +127,7 @@ def calc_toc11_spin (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize,
                         Es += 1
                         if NewEn_max < en[-1] and NewEn_max+Elda_kb < en[-1]:
                             Done_max = True
-                    if metal_valence == 1:
+                    if metal_valence == 1 and -Elda_kb < en[-1]:
                         NewEn_max = -Elda_kb #-0.005
                     tfft_min = -2*np.pi/invar_den
                     tfft_max = 0
@@ -249,7 +249,7 @@ def calc_toc11_spin (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize,
                         Es += 1
                         if NewEn_max < en[-1] and NewEn_max+Elda_kb < en[-1]:
                             Done_max = True
-                    if metal_valence == 1:
+                    if metal_valence == 1 and -Elda_kb < en[-1]:
                         NewEn_max = -Elda_kb #-0.005
                     tfft_min = -2*np.pi/invar_den
                     tfft_max = 0

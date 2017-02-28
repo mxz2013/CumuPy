@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function
 from sf_modules_new import *
+from sf_crc_modules import *
 import numpy as np;
 import matplotlib.pylab as plt;
 plt.figure(1)
@@ -105,6 +106,10 @@ if isfile("invar.in"):
     else:
     	spf_qp = 0
 
+    if 'calc_toc96' in invar: #enable TOC96 calculation
+    	flag_calc_toc96 = int(invar['calc_toc96'])
+    else:
+    	flag_calc_toc96 = 0
     if 'calc_toc11' in invar: #enable TOC11 calculation
     	flag_calc_toc11 = int(invar['calc_toc11'])
     else:
@@ -158,7 +163,7 @@ else :
 print ("Reading invar done.")
 #print(" "+"===="+" Input variables "+"====")
 #print()
-
+npoles = int(150)  #for sampling Im\Sigma lesser to calculate crc_unocc
 nband = bdgw_max - bdgw_min + 1
 hartree = read_hartree()
 
@@ -285,7 +290,7 @@ if flag_calc_toc11 == 1:
         print (" ### Writing out A(\omega)_TOC11..")
     else:
         print( "Calculating TOC11 begins")
-        interp_en, toc_tot = calc_toc11_new(gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax, 
+        en_toc11, toc11_tot = calc_toc11_new(gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax, 
                                          eqp, Elda,scgw, Eplasmon, ims,
                                             invar_den, invar_eta, wtk,
                                             metal_valence)
@@ -293,31 +298,45 @@ if flag_calc_toc11 == 1:
         print(" ### Writing out A(\omega)_TOC11...  ")
         outname = "spftot_toc11"+"_s"+str(sfac)+"_p"+str(pfac)+"_"+str(penergy)+"ev"+".dat"
         outfile = open(outname,'w')
-        for i in xrange(len(interp_en)):
-            outfile.write("%8.4f %12.8e\n" % (interp_en[i], toc_tot[i]))
+        for i in xrange(len(en_toc11)):
+            outfile.write("%8.4f %12.8e\n" % (en_toc11[i], toc11_tot[i]))
         outfile.close()
         print(" A(\omega)_TOC11 written in", outname)
-        plt.plot(interp_en,toc_tot,label="ftot_toc11");
+        plt.plot(en_toc11,toc11_tot,label="ftot_toc11");
         print (" ### Writing out A(\omega)_TOC11..")
         
-if flag_calc_crc ==1:       
-    print("Calulating CRC begins::")
+if flag_calc_toc96 ==1:       
+    print("Calulating toc96 begins::")
     
-    interp_en, toc_tot, crc_tot = calc_crc(gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax, 
+    en_toc96, toc96_tot, beta_greater = calc_toc96(gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax, 
                                          eqp, Elda,scgw, Eplasmon, ims,
                                             invar_den, invar_eta, wtk,
-                                            metal_valence, imeqp)
+                                            metal_valence, imeqp,nkpt, nband)
 
     print(" ### Writing out A(\omega)_TOC96 and CRC...  ")
-    outname = "spftot_toc+crc"+"_s"+str(sfac)+"_p"+str(pfac)+"_"+str(penergy)+"ev"+".dat"
+    outname = "spftot_toc96"+"_s"+str(sfac)+"_p"+str(pfac)+"_"+str(penergy)+"ev"+".dat"
     outfile = open(outname,'w')
-    for i in xrange(len(interp_en)):
-        outfile.write("%8.4f %12.8e %12.8e\n" % (interp_en[i], toc_tot[i], crc_tot[i]))
+    for i in xrange(len(en_toc96)):
+        outfile.write("%8.4f %12.8e \n" % (en_toc96[i], toc96_tot[i]))
     outfile.close()
     print(" A(\omega)_TOC96 and CRC written in", outname)
-    plt.plot(interp_en,crc_tot,label="ftot_crc");
+    plt.plot(en_toc96,toc96_tot,label="ftot_toc96");
     print (" ### Writing out A(\omega)_TOC11..")
     
+if flag_calc_crc == 1 and flag_calc_toc96 ==1:
+    print("Calulating CRC begines::")
+    omegampole, ampole = calc_multipole(npoles, ims, kptrange, bdrange,
+                                        bdgw_min,
+                                        eqp, en, enmin, enmax)
+    crc_tot = calc_crc(wtk, kptrange, bdrange, bdgw_min, omegampole, ampole, npoles,
+                          beta_greater, en_toc96, toc96_tot, imeqp, eqp)
+    outname = "spftot_crc"+"_s"+str(sfac)+"_p"+str(pfac)+"_"+str(penergy)+"ev"+".dat"
+    outfile = open(outname,'w')
+    for i in xrange(len(en_toc96)):
+        outfile.write("%8.4f %12.8e \n" % (en_toc96[i], crc_tot[i]))
+    outfile.close()
+    print(" A(\omega)_crcand CRC written in", outname)
+    plt.plot(en_toc96,crc_tot,label="ftot_crc");
 if flag_calc_rc == 1:
     print ("Calculating RC begins")
    # e0=time.time()

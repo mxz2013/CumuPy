@@ -1,0 +1,48 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+! Edited by Matteo Guzzo
+
+python module extmod_spf_mpole ! in 
+    interface  ! in :extmod_spf_mpole
+        subroutine f2py_calc_spf_mpole(spf,en,nen,prefac,akb,omegapkb,eqp,imeqp,npoles) ! in :extmod_spf_mpole:spf_mpole.f90
+            double precision dimension(nen),depend(nen),intent(in,out) :: spf
+            double precision dimension(nen),intent(in) :: en
+            integer optional,check(len(en)==nen),depend(en),intent(in) :: nen=len(en)
+            !integer optional check(len(en)==nen),depend(en),intent(in) :: nen
+            double precision,intent(in) :: prefac
+            double precision dimension(npoles),intent(in) :: akb
+            double precision dimension(npoles),intent(in) :: omegapkb
+            integer optional,check(len(akb)==npoles),intent(in),depend(akb) :: npoles=len(akb)
+            double precision,intent(in) :: eqp
+            double precision,intent(in) :: imeqp
+        end subroutine f2py_calc_spf_mpole
+        subroutine f2py_calc_crc_mpole(spf,en,nen,bkb,prefac,akb,omegapkb,eqp,imeqp,npoles) ! in :extmod_spf_mpole:spf_mpole.f90
+            double precision dimension(nen),depend(nen),intent(in,out) :: spf
+            double precision dimension(nen),intent(in) :: en
+            integer optional,check(len(en)==nen),depend(en),intent(in) :: nen=len(en)
+            !integer optional check(len(en)==nen),depend(en),intent(in) :: nen
+            double precision,intent(in) :: bkb
+            double precision,intent(in) :: prefac
+            double precision dimension(npoles),intent(in) :: akb
+            double precision dimension(npoles),intent(in) :: omegapkb
+            integer optional,check(len(akb)==npoles),intent(in),depend(akb) :: npoles=len(akb)
+            double precision,intent(in) :: eqp
+            double precision,intent(in) :: imeqp
+        end subroutine f2py_calc_spf_mpole
+        subroutine f2py_calc_spf_mpole_extinf(spf,en,nen,prefac,akb,omegapkb,wkb,eqp,imeqp,npoles) ! in :extmod_spf_mpole:spf_mpole.f90
+            double precision dimension(nen),depend(nen),intent(in,out) :: spf
+            double precision dimension(nen),intent(in) :: en
+            integer optional,check(len(en)==nen),depend(en),intent(in) :: nen=len(en)
+            double precision,intent(in) :: prefac
+            double precision dimension(npoles),intent(in) :: akb
+            double precision dimension(npoles),intent(in) :: omegapkb
+            double precision dimension(npoles),intent(in) :: wkb
+            integer optional,check(len(akb)==npoles),intent(in),depend(akb) :: npoles=len(akb)
+            double precision,intent(in) :: eqp
+            double precision,intent(in) :: imeqp
+        end subroutine f2py_calc_spf_mpole_extinf
+    end interface 
+end python module extmod_spf_mpole
+
+! This file was auto-generated with f2py (version:2).
+! See http://cens.ioc.ee/projects/f2py2e/
