@@ -10,7 +10,7 @@ from os.path import isfile, join, isdir
 from os import getcwd, pardir, mkdir, chdir
 import csv
 
-def calc_multipole(npoles, ims, kptrange, bdrange,bdgw_min, eqp, en, enmin, enmax):
+def calc_multipole(nkpt, nband,gwfermi,npoles, ims, kptrange, bdrange,bdgw_min, eqp, en, enmin, enmax):
     """
     Function that calculates frequencies and amplitudes
     of ImSigma using the multipole model. 
@@ -29,13 +29,14 @@ def calc_multipole(npoles, ims, kptrange, bdrange,bdgw_min, eqp, en, enmin, enma
         newen = np.arange(enmin,en[-1],newdx)
     else :  
         newen = np.arange(enmin,enmax,newdx)
-    omegampole =  np.zeros((ims[:,0,0].size,ims[0,:,0].size,npoles))
-    ampole =  np.zeros((ims[:,0,0].size,ims[0,:,0].size,npoles))
+    omegampole =  np.zeros((nkpt,nband,npoles))
+    ampole =  np.zeros((nkpt,nband,npoles))
     for ik in kptrange:
         ikeff =  ik + 1
         for ib in bdrange:
+            eqpkb = eqp[ik,ib]
             ibeff =  ib + bdgw_min
-            if eqp[ik,ib] > newen[-npoles]:
+            if eqpkb > newen[-npoles]:
                 omegampole[ik,ib] = omegampole[ik,ib-1]
                 ampole[ik,ib] = ampole[ik,ib-1]
                 print(" Eqp beyond available energy range. Values from lower band are taken.")
@@ -49,12 +50,11 @@ def calc_multipole(npoles, ims, kptrange, bdrange,bdgw_min, eqp, en, enmin, enma
                 # so as to have it defined on the positive x axis
                 # and so that the positive direction is in the 
                 # increasing direction of the array index
-                if eqp[ik,ib] <= 0:
-                    en3 = newen[newen<=eqp[ik,ib]] # So as to avoid negative omegampole
-                    im3 = abs(imskb[newen<=eqp[ik,ib]]/np.pi) # This is what should be fitted
+                if eqpkb <= gwfermi:
+                    en3 = newen[newen<=eqpkb] # So as to avoid negative omegampole
                 else:
-                    en3 = newen[newen>eqp[ik,ib]] # So as to avoid negative omegampole
-                    im3 = abs(imskb[newen<=eqp[ik,ib]]/np.pi) # This is what should be fitted
+                    en3 = newen[newen>eqpkb] # So as to avoid negative omegampole
+                im3 = abs(interpims(en3)/np.pi)
                 if en3.size == 0:
                     print()
                     print(" WARNING: QP energy is outside of given energy range!\n"+\
@@ -63,10 +63,13 @@ def calc_multipole(npoles, ims, kptrange, bdrange,bdgw_min, eqp, en, enmin, enma
                     print(" eqp[ik,ib], newen[-1]", eqp[ik,ib] , newen[-1])
                     continue
                 en3 = en3 - eqp[ik,ib]
-                if eqp[ik,ib] <= 0:
+                if eqp[ik,ib] <= gwfermi:
                     en3 = -en3[::-1] 
                     im3 = im3[::-1]
-                omegai, lambdai, deltai = fit_multipole_const(en3,im3,npoles)
+                #omegai, lambdai, deltai = fit_multipole_const(en3,im3,npoles)
+                omegai, lambdai, deltai = fit_multipole(en3,im3,npoles,0) ## Matteo
+                #used this funciton. TO DO: fit_multipole_const does not work
+
                 # HERE WE MUST CHECK THAT THE NUMBER OF POLES 
                 # IS NOT BIGGER THAN THE NUMBER OF POINTS THAT HAS TO BE FITTED
                 if npoles > omegai.size:
@@ -89,8 +92,8 @@ def calc_multipole(npoles, ims, kptrange, bdrange,bdgw_min, eqp, en, enmin, enma
     outname = "omega_j_np"+str(npoles)+".dat"
     outfile2 = open(outname,'w')
     for ipole in xrange(npoles):
-        for ik in range(ims[:,0,0].size):
-            for ib in range(ims[0,:,0].size):
+        for ik in xrange(nkpt):
+            for ib in xrange(nband):
                 outfile.write("%10.5f"  % (ampole[ik,ib,ipole]))
                 outfile2.write("%10.5f" % (omegampole[ik,ib,ipole]))
             outfile.write("\n")
@@ -101,7 +104,7 @@ def calc_multipole(npoles, ims, kptrange, bdrange,bdgw_min, eqp, en, enmin, enma
     outfile2.close()
     return omegampole, ampole
 
-def calc_crc(wtk, kptrange, bdrange, bdgw_min, omegampole,
+def calc_crc(invar_eta, gwfermi, wtk, kptrange, bdrange, bdgw_min, omegampole,
                 ampole, npoles, beta_greater, en_toc96, toc96_tot, imeqp, eqp):
     """
     Calculation of the unoccupied part of the CRC spectral function 
@@ -112,6 +115,7 @@ def calc_crc(wtk, kptrange, bdrange, bdgw_min, omegampole,
     newdx = 0.005
     ftot_unocc = np.zeros((np.size(en_toc96)),order='Fortran')
     ftot = np.zeros((np.size(en_toc96)),order='Fortran')
+
     for ik in kptrange:
         ikeff = ik + 1
         for ib in bdrange:
@@ -119,15 +123,14 @@ def calc_crc(wtk, kptrange, bdrange, bdgw_min, omegampole,
             print(" ik, ib, ikeff, ibeff", ik, ib, ikeff, ibeff)
             #prefac=np.exp(-np.sum(ampole[ik,ib]))/np.pi*wtk[ik]*pdos[ib]*abs(imeqp[ik,ib])
             # Experimental fix for npoles dependence
-            tmp = 1/np.pi*wtk[ikeff]*abs(imeqp[ik,ib])
+            tmp = 1/np.pi*wtk[ik]*abs(imeqp[ik,ib])
             exponent = - np.sum(ampole[ik,ib]) - beta_greater[ik,ib] 
             prefac = np.exp(exponent)*tmp
             akb = ampole[ik,ib] # This is a numpy array (slice)
             bkb =  beta_greater[ik,ib]/npoles  # check here why we need the npoles!!
-            print("SKYDBUG beta_greater",  beta_greater[ik,ib])
             omegakb = omegampole[ik,ib] # This is a numpy array (slice)
-            eqpkb = eqp[ik,ib]
-            imkb = imeqp[ik,ib]
+            eqpkb = eqp[ik,ib] - gwfermi
+            imkb = imeqp[ik,ib]+invar_eta
             #tmpf1 = calc_spf_mpole(enexp,prefac,akb,omegakb,eqpkb,imkb,npoles)
             #print(nen, np.size(enexp))
             #tmpf = 0.0*tmpf
@@ -136,11 +139,10 @@ def calc_crc(wtk, kptrange, bdrange, bdgw_min, omegampole,
                 tmpf = np.zeros((np.size(en_toc96)), order='Fortran')
                 tmpf = f2py_calc_crc_mpole(tmpf,en_toc96,bkb,prefac,akb,omegakb,eqpkb,imkb)
                 ftot_unocc = ftot_unocc + tmpf
-
                 with open("CRC_unocc-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat",
                      'w') as f:
                     writer = csv.writer(f, delimiter = '\t')
-                    writer.writerows(zip (en_toc96, tmpf))
+                    writer.writerows(zip (en_toc96, tmpf/wtk[ik]))
 
                 #tmpf = calc_spf_mpole(enexp,prefac,akb,omegakb,eqpkb,imkb,npoles)
             #outnamekb = "spf_exp-k"+str("%02d"%(ikeff+1))+"-b"+str("%02d"%(ibeff+1))+"_np"+str(npoles)+"."+str(penergy)
@@ -319,7 +321,7 @@ def calc_toc96 (gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enm
                 toc96_tot += spfkb
                 with open("TOC96-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat", 'w') as f:
                     writer = csv.writer(f, delimiter = '\t')
-                    writer.writerows(zip (interp_en-gwfermi, spfkb))
+                    writer.writerows(zip (interp_en-gwfermi, spfkb/wtk[ik]))
                 #outnamekb = "TOC11-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat"
                 #outfilekb = open(outnamekb,'w')
                 #en_toc11 = []

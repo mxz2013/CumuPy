@@ -146,12 +146,17 @@ if isfile("invar.in"):
     else:
         invar_eta = 0.2
         
+    if 'npoles' in invar: #lorentzian broadening of all cumulant A(\omega)
+        npoles = int(invar['npoles'])
+    else:
+        npoles = int(1)
+
     if 'FFTtsize' in invar: #the number of time steps used in FFT
         FFTtsize = int(invar['FFTtsize'])
         if FFTtsize % 2 != 0:
-            FFTtsize = FFTtsize+1
+            FFTtsize = int(FFTtsize+1)
     else:
-        FFTtsize = 5000
+        FFTtsize = int(5000)
     
     if 'abinit_eqp' in invar: # use eqp from abinit or recalculated
     	abinit_eqp = int(invar['abinit_eqp']) #in this code.
@@ -163,7 +168,7 @@ else :
 print ("Reading invar done.")
 #print(" "+"===="+" Input variables "+"====")
 #print()
-npoles = int(150)  #for sampling Im\Sigma lesser to calculate crc_unocc
+#npoles = int(150)  #for sampling Im\Sigma lesser to calculate crc_unocc
 nband = bdgw_max - bdgw_min + 1
 hartree = read_hartree()
 
@@ -192,10 +197,6 @@ else:
 en, res, ims = read_sigfile(sigfilename, nkpt, bdgw_min, bdgw_max)
 
 bdrange = xrange(minband - bdgw_min, maxband - bdgw_min + 1)
-#if nspin == 1:
-#    kptrange = xrange(minkpt - 1, maxkpt)
-#else:
-#    kptrange = xrange(minkpt - 1, 2*maxkpt)
 kptrange = xrange(minkpt - 1, maxkpt*nspin)
 
 ### ===================================================== ###
@@ -240,12 +241,13 @@ else:
 # GW spectral function part
 t_pregw = time.time() 
 if flag_calc_gw == 1:
+    print(" # ------------------------------------------------ # ")
     if nspin == 2:
         from sf_modules_spin import calc_spf_gw_spin
         newen, spftot_up, spftot_down = calc_spf_gw_spin(bdrange, kptrange,
                                                          bdgw_min, wtk, en, enmin, enmax,
                                                          res,ims, hartree, gwfermi)
-        print(" ### Writing out A(\omega)_GW...  ")
+       # print(" ### Writing out A(\omega)_GW...  ")
         outname = "spftot_gw"+"_s"+str(sfac)+"_p"+str(pfac)+"_"+str(penergy)+"ev"+".dat"
         outfile = open(outname,'w')
         for i in xrange(np.size(newen)):
@@ -259,7 +261,7 @@ if flag_calc_gw == 1:
     elif nspin == 1:
         newen, spftot = calc_spf_gw(bdrange, kptrange, bdgw_min, wtk, en, enmin, enmax, res,
                     ims, hartree, gwfermi, invar_eta)
-        print(" ### Writing out A(\omega)_GW...  ")
+       # print(" ### Writing out A(\omega)_GW...  ")
         outname = "spftot_gw"+"_s"+str(sfac)+"_p"+str(pfac)+"_"+str(penergy)+"ev"+".dat"
         outfile = open(outname,'w')
         for i in xrange(np.size(newen)):
@@ -277,7 +279,7 @@ if flag_calc_toc11 == 1:
                         FFTtsize, en,enmin, enmax, eqp,Elda,scgw,Eplasmon, ims,
                         invar_den, invar_eta, wtk, metal_valence)
         
-        print(" ### Writing out A(\omega)_TOC11...  ")
+       # print(" ### Writing out A(\omega)_TOC11...  ")
 
         outname = "spftot_toc11"+"_s"+str(sfac)+"_p"+str(pfac)+"_"+str(penergy)+"ev"+".dat"
         outfile = open(outname,'w')
@@ -287,7 +289,7 @@ if flag_calc_toc11 == 1:
         outfile.close()
         print(" A(\omega)_TOC11 written in", outname)
         plt.plot(interp_en,toc_tot_up,label="ftot_toc11_SpinUp");
-        print (" ### Writing out A(\omega)_TOC11..")
+       # print (" ### Writing out A(\omega)_TOC11..")
     else:
         print( "Calculating TOC11 begins")
         en_toc11, toc11_tot = calc_toc11_new(gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax, 
@@ -295,7 +297,7 @@ if flag_calc_toc11 == 1:
                                             invar_den, invar_eta, wtk,
                                             metal_valence)
         
-        print(" ### Writing out A(\omega)_TOC11...  ")
+       # print(" ### Writing out A(\omega)_TOC11...  ")
         outname = "spftot_toc11"+"_s"+str(sfac)+"_p"+str(pfac)+"_"+str(penergy)+"ev"+".dat"
         outfile = open(outname,'w')
         for i in xrange(len(en_toc11)):
@@ -306,6 +308,7 @@ if flag_calc_toc11 == 1:
         print (" ### Writing out A(\omega)_TOC11..")
         
 if flag_calc_toc96 ==1:       
+    print("# ------------------------------------------------ #")
     print("Calulating toc96 begins::")
     
     en_toc96, toc96_tot, beta_greater = calc_toc96(gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax, 
@@ -313,7 +316,7 @@ if flag_calc_toc96 ==1:
                                             invar_den, invar_eta, wtk,
                                             metal_valence, imeqp,nkpt, nband)
 
-    print(" ### Writing out A(\omega)_TOC96 and CRC...  ")
+    #print(" ### Writing out A(\omega)_TOC96 and CRC...  ")
     outname = "spftot_toc96"+"_s"+str(sfac)+"_p"+str(pfac)+"_"+str(penergy)+"ev"+".dat"
     outfile = open(outname,'w')
     for i in xrange(len(en_toc96)):
@@ -324,11 +327,11 @@ if flag_calc_toc96 ==1:
     print (" ### Writing out A(\omega)_TOC11..")
     
 if flag_calc_crc == 1 and flag_calc_toc96 ==1:
+    print("# ------------------------------------------------ #")
     print("Calulating CRC begines::")
-    omegampole, ampole = calc_multipole(npoles, ims, kptrange, bdrange,
-                                        bdgw_min,
-                                        eqp, en, enmin, enmax)
-    crc_tot = calc_crc(wtk, kptrange, bdrange, bdgw_min, omegampole, ampole, npoles,
+    omegampole, ampole = calc_multipole(nkpt, nband,gwfermi, npoles, ims, kptrange, bdrange,
+                                        bdgw_min,eqp, en, enmin, enmax)
+    crc_tot = calc_crc(invar_eta,gwfermi, wtk, kptrange, bdrange, bdgw_min, omegampole, ampole, npoles,
                           beta_greater, en_toc96, toc96_tot, imeqp, eqp)
     outname = "spftot_crc"+"_s"+str(sfac)+"_p"+str(pfac)+"_"+str(penergy)+"ev"+".dat"
     outfile = open(outname,'w')
@@ -338,6 +341,7 @@ if flag_calc_crc == 1 and flag_calc_toc96 ==1:
     print(" A(\omega)_crcand CRC written in", outname)
     plt.plot(en_toc96,crc_tot,label="ftot_crc");
 if flag_calc_rc == 1:
+    print("# ------------------------------------------------ #")
     print ("Calculating RC begins")
    # e0=time.time()
    # c0=time.clock()

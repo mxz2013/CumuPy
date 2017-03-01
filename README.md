@@ -3,7 +3,7 @@ A python code to compute the cumulant expansion of the Green's function for theo
 
 The code is written based on the cumulant code of Dr. Matteo Guzzo.
 
-It is written in python 2.7.12. The required modules are numpy, scipy, matplotlib, pyfftw, pyfftw.  
+It is written in python 2.7.12. The required modules are numpy, scipy, matplotlib, pyfftw.  
 
 This code is written according to abinit GW output. Thus all the inputs in the test folder are from abinit calculation with some post process. To use the code, you need to provide the following inputs, i.e.,
 
@@ -17,7 +17,7 @@ This code is written according to abinit GW output. Thus all the inputs in the t
 
 5. eqp_abinit.dat is necessary if you want to use the QP energies from abinit by putting "abinit_eqp=1"
 
-The last file you need to provide is invar.in where you define what kind of calculation you want:
+The last file you need to provide is invar.in where you define what kind of calculation you want. All possible variables in invar.in are:
 
     if 'sigmafile' in invar:  ## The name of the self-energy file.
         sigfilename = invar['sigmafile'];
@@ -96,10 +96,15 @@ The last file you need to provide is invar.in where you define what kind of calc
     	flag_calc_gw = int(invar['calc_gw'])
     else:
     	flag_calc_gw = 0
-    if 'spf_qp' in invar:  #enable QP spectra calculation
+    if 'spf_qp' in invar:  #enable GW calculation
     	spf_qp = int(invar['spf_qp'])
     else:
     	spf_qp = 0
+
+    if 'calc_toc96' in invar: #enable TOC96 calculation
+    	flag_calc_toc96 = int(invar['calc_toc96'])
+    else:
+    	flag_calc_toc96 = 0
     if 'calc_toc11' in invar: #enable TOC11 calculation
     	flag_calc_toc11 = int(invar['calc_toc11'])
     else:
@@ -108,11 +113,10 @@ The last file you need to provide is invar.in where you define what kind of calc
     if 'calc_rc' in invar: # enable retarded cumulant calculation
     	flag_calc_rc = int(invar['calc_rc'])
     else:
-    	flag_calc_rc = 0
+    	iflag_calc_rc = 0
     
     if 'calc_crc' in invar: #enable CRC so as TOC96 calculation
-    	flag_calc_crc = int(invar['calc_crc']) # CRC implementation is not
-                                            #ready yet!!
+    	flag_calc_crc = int(invar['calc_crc']) #NOTE: if calc_crc = 1, toc96 has to be enabled. 
     else:
     	flag_calc_crc = 0
     if 'gwfermi' in invar: #Fermi enegy after GW calculation
@@ -126,25 +130,32 @@ The last file you need to provide is invar.in where you define what kind of calc
     if 'invar_den' in invar: #d\omega in the cumulant A(\omega) 
     	invar_den = float(invar['invar_den']) # for the moment the choices 
     else:                                 # are 0.05, 0.025, 0.0125, 0.01,0.005
-    	invar_den = 0.05
+    	invar_den = 0.05                 #to be sure zero is in the list
+
     if 'metal_valence' in invar: # TOC for metal valence is implemented
         metal_valence = float(invar['metal_valence']) #different with core
     else:
         metal_valence = 0
+
     if 'invar_eta' in invar: #lorentzian broadening of all cumulant A(\omega)
         invar_eta = float(invar['invar_eta'])
     else:
         invar_eta = 0.2
         
+    if 'npoles' in invar: # the number of poles used in multipole sampling
+        npoles = int(invar['npoles'])
+    else:
+        npoles = int(1)
+
     if 'FFTtsize' in invar: #the number of time steps used in FFT
         FFTtsize = int(invar['FFTtsize'])
         if FFTtsize % 2 != 0:
-            FFTtsize = FFTtsize+1
+            FFTtsize = int(FFTtsize+1)
     else:
-        FFTtsize = 5000
-    
+        FFTtsize = int(5000)
+
     if 'abinit_eqp' in invar: # use eqp from abinit or recalculated
     	abinit_eqp = int(invar['abinit_eqp']) #in this code.
     else:
-    	abinit_eqp = 0 
+	abinit_eqp = 0
 
