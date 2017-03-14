@@ -307,39 +307,52 @@ if flag_calc_toc11 == 1:
         plt.plot(en_toc11,toc11_tot,label="ftot_toc11");
         print (" ### Writing out A(\omega)_TOC11..")
         
-if flag_calc_toc96 ==1:       
-    print("# ------------------------------------------------ #")
-    print("Calulating toc96 begins::")
+#if flag_calc_toc96 ==1:       
+#    print("# ------------------------------------------------ #")
+#    print("Calulating toc96 begins::")
+#    
+#    en_toc96, toc96_tot, beta_greater = calc_toc96(gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax, 
+#                                         eqp, Elda,scgw, Eplasmon, ims,
+#                                            invar_den, invar_eta, wtk,
+#                                            metal_valence, imeqp,nkpt, nband)
+#
+#    #print(" ### Writing out A(\omega)_TOC96 and CRC...  ")
+#    outname = "spftot_toc96"+"_s"+str(sfac)+"_p"+str(pfac)+"_"+str(penergy)+"ev"+".dat"
+#    outfile = open(outname,'w')
+#    for i in xrange(len(en_toc96)):
+#        outfile.write("%8.4f %12.8e \n" % (en_toc96[i], toc96_tot[i]))
+#    outfile.close()
+#    print(" A(\omega)_TOC96 and CRC written in", outname)
+#    plt.plot(en_toc96,toc96_tot,label="ftot_toc96");
+#    print (" ### Writing out A(\omega)_TOC11..")
     
-    en_toc96, toc96_tot, beta_greater = calc_toc96(gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax, 
-                                         eqp, Elda,scgw, Eplasmon, ims,
-                                            invar_den, invar_eta, wtk,
-                                            metal_valence, imeqp,nkpt, nband)
-
-    #print(" ### Writing out A(\omega)_TOC96 and CRC...  ")
-    outname = "spftot_toc96"+"_s"+str(sfac)+"_p"+str(pfac)+"_"+str(penergy)+"ev"+".dat"
-    outfile = open(outname,'w')
-    for i in xrange(len(en_toc96)):
-        outfile.write("%8.4f %12.8e \n" % (en_toc96[i], toc96_tot[i]))
-    outfile.close()
-    print(" A(\omega)_TOC96 and CRC written in", outname)
-    plt.plot(en_toc96,toc96_tot,label="ftot_toc96");
-    print (" ### Writing out A(\omega)_TOC11..")
-    
-if flag_calc_crc == 1 and flag_calc_toc96 ==1:
+if flag_calc_crc == 1:
     print("# ------------------------------------------------ #")
     print("Calulating CRC begines::")
-    omegampole, ampole = calc_multipole(nkpt, nband,gwfermi, npoles, ims, kptrange, bdrange,
-                                        bdgw_min,eqp, en, enmin, enmax)
-    crc_tot = calc_crc(invar_eta,gwfermi, wtk, kptrange, bdrange, bdgw_min, omegampole, ampole, npoles,
-                          beta_greater, en_toc96, toc96_tot, imeqp, eqp)
+    omegampole, ampole = calc_multipole (scgw,Elda,lda_fermi,nkpt,
+                                         nband,gwfermi,npoles, ims, kptrange,
+                                         bdrange,bdgw_min, eqp, en, enmin,
+                                         enmax)
+    en_crc, toc96tot, crc_tot =  calc_toc96_crc (gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
+                    eqp, Elda, scgw, Eplasmon, ims, invar_den,
+                    invar_eta, wtk, metal_valence, imeqp,nkpt,
+                nband,ampole,npoles,omegampole)
+    
+    #calc_crc(invar_eta,gwfermi, wtk, kptrange, bdrange, bdgw_min, omegampole, ampole, npoles,
+    #                      beta_greater, en_toc96, toc96_tot, imeqp, eqp)
+    outname = "spftot_toc96"+"_s"+str(sfac)+"_p"+str(pfac)+"_"+str(penergy)+"ev"+".dat"
+    outfile = open(outname,'w')
+    for i in xrange(len(en_crc)):
+        outfile.write("%8.4f %12.8e \n" % (en_crc[i], toc96tot[i]))
+    outfile.close()
     outname = "spftot_crc"+"_s"+str(sfac)+"_p"+str(pfac)+"_"+str(penergy)+"ev"+".dat"
     outfile = open(outname,'w')
-    for i in xrange(len(en_toc96)):
-        outfile.write("%8.4f %12.8e \n" % (en_toc96[i], crc_tot[i]))
+    for i in xrange(len(en_crc)):
+        outfile.write("%8.4f %12.8e \n" % (en_crc[i], crc_tot[i]))
     outfile.close()
-    print(" A(\omega)_crcand CRC written in", outname)
-    plt.plot(en_toc96,crc_tot,label="ftot_crc");
+    plt.plot(en_crc,crc_tot,label="ftot_crc");
+    plt.plot(en_crc,toc96tot,label="ftot_toc96");
+
 if flag_calc_rc == 1:
     print("# ------------------------------------------------ #")
     print ("Calculating RC begins")

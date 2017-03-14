@@ -309,7 +309,7 @@ def find_eqp_resigma(en, resigma, gwfermi):
         [a, b] = params[0]
         if -b/a < en[-1]:
             print("WTF!!! BYE!")
-            sys.exit()
+            #sys.exit()
         tmpeqp = -b/a
         zeros.append(tmpeqp)
    # elif nzeros>1 : 
@@ -352,6 +352,7 @@ def calc_eqp_imeqp(spf_qp, wtk,bdrange, kptrange,bdgw_min, en,enmin, enmax, res,
             #    writer = csv.writer(f, delimiter = '\t')
             #    writer.writerows(zip (newen-gwfermi, temparray))
             
+            print("SKYDEBUG ik,ib", ikeff, ibeff)
             interpims = interp1d(en, ims[ik,ib], kind = 'linear', axis = -1)
             tempim = interpims(newen)
             # New method to overcome plasmaron problem
