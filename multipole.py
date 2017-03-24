@@ -90,6 +90,8 @@ def fit_multipole(preen,predata,nbin, method='const2', ifilewrite=0):
        #print(omegai, gi, deltai)
     elif method == 'fast':
         omegai, gi, deltai = fit_multipole_fast(preen,predata,nbin)
+    elif method == 'old':
+        omegai, gi, deltai = fit_multipole_old(preen,predata,nbin)
     else:
         omegai, gi, deltai = fit_multipole_const2(preen,predata,nbin)
     return omegai, gi, deltai
@@ -650,6 +652,7 @@ def fit_multipole_old(preen,predata,nbin,ifilewrite=0,binmode=0):
     print(" Size(bounds) = %4i (should be %g) " % (np.size(bounds), nbin+1))
     print(" Size(omegai) = %4i (should be %g) " % (np.size(omegai), nbin))
     print(" Size(deltai) = %4i (should be %g) " % (np.size(deltai), nbin))
+    ifilewrite = 1
     if ifilewrite == 1:
         # Print a file like Josh output
         # omega_i  gamma_i  g_i    delta_i

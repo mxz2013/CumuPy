@@ -65,7 +65,21 @@ def read_hartree():
         print ("hartree.dat not found! Impossible to continue!!")
         sys.exit(1)
     return hartree
-    
+
+def read_hf():
+    import numpy as np;
+
+    if isfile("Sig_x.dat"):
+        print(" Reading Sig_x.dat... ")
+        Sigxfile = open("Sig_x.dat");
+        Sig_x = []; 
+        for line in Sigxfile.readlines():
+            Sig_x.append(map(float,line.split()));
+        Sigxfile.close()
+        print("Done.")
+        Sig_x = np.array(Sig_x);
+    return Sig_x
+
 def read_lda():
     import numpy as np;
     if isfile("E_lda.dat"):
@@ -352,7 +366,6 @@ def calc_eqp_imeqp(spf_qp, wtk,bdrange, kptrange,bdgw_min, en,enmin, enmax, res,
             #    writer = csv.writer(f, delimiter = '\t')
             #    writer.writerows(zip (newen-gwfermi, temparray))
             
-            print("SKYDEBUG ik,ib", ikeff, ibeff)
             interpims = interp1d(en, ims[ik,ib], kind = 'linear', axis = -1)
             tempim = interpims(newen)
             # New method to overcome plasmaron problem
@@ -395,7 +408,7 @@ def calc_eqp_imeqp(spf_qp, wtk,bdrange, kptrange,bdgw_min, en,enmin, enmax, res,
 
 def calc_toc11_new (gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
                     eqp, Elda, scgw, Eplasmon, ims, invar_den,
-                    invar_eta, wtk, metal_valence):
+                    invar_eta, wtk, metal_valence,nkpt,nband):
     import numpy as np
     import pyfftw
     from numpy.fft import fftshift,fftfreq
@@ -415,6 +428,7 @@ def calc_toc11_new (gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en
     #pdos = np.array(pdos)
     tol_fermi = 1e-3
     fftsize = FFTtsize
+    norm = np.zeros((nkpt,nband))
     outname = "Norm_check_toc11.dat"
     outfile = open(outname,'w')
     for ik in kptrange:
@@ -539,20 +553,21 @@ def calc_toc11_new (gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en
                 #    en_toc11.append(interp_en[i])
                 #    outfilekb.write("%8.4f %12.8e \n" % (interp_en[i],spfkb[i])) 
                 #outfilekb.close()
-                norm = np.trapz(spfkb,interp_en)/(wtk[ik])
+                norm[ik,ib] = np.trapz(spfkb,interp_en)/(wtk[ik])
                 print("check the renormalization : :")
                 print()
-                print("the normalization of the spectral function is",norm)
-                if abs(1-norm)>0.01:
+                print("the normalization of the spectral function is",norm[ik,ib])
+                if abs(1-norm[ik,ib])>0.01:
                     print("WARNING: the renormalization is too bad!\n"+\
                           "Increase the time size to converge better.", ikeff,ibeff)
     
-                outfile.write("%8.4f %12.8e \n" % (newdx, norm))
+                outfile.write("%14.5f" % (norm[ik,ib]))
+        outfile.write("\n")
     outfile.close()
     return interp_en-gwfermi, toc_tot
 
 def calc_rc (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
-                    eqp, Elda, scgw, ims, invar_den, invar_eta, wtk):
+                    eqp, Elda, scgw, ims, invar_den, invar_eta, wtk,nkpt,nband):
     import numpy as np
     import pyfftw
     import csv
@@ -563,11 +578,11 @@ def calc_rc (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin
     ddinter = 0.005 
     newen_rc = np.arange(enmin, enmax, ddinter)
     rc_tot =  np.zeros((np.size(newen_rc))) 
-    #pdos = np.array(pdos)
+    #pdos = np.array(pdos,nkpt,nband)
     fftsize = FFTtsize
+    norm = np.zeros((nkpt,nband))
     outname = "Norm_check_rc.dat"
     outfile = open(outname,'w')
-
     for ik in kptrange:
         ikeff = ik + 1
         for ib in bdrange:
@@ -686,6 +701,154 @@ def calc_rc (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin
             #    en_toc11.append(interp_en[i])
             #    outfilekb.write("%8.4f %12.8e \n" % (interp_en[i],spfkb[i])) 
             #outfilekb.close()
+            norm[ik,ib] = np.trapz(spfkb,interp_en)/(wtk[ik])
+            print("check the renormalization : :")
+            print()
+            print("the normalization of the spectral function is",norm[ik,ib])
+            if abs(1-norm[ik,ib])>0.01:
+                print("WARNING: the renormalization is too bad!\n"+\
+                      "Increase the time size to converge better.", ikeff,ibeff)
+    
+            outfile.write("%14.5f" % (norm[ik,ib]))
+        outfile.write("\n")
+    outfile.close()
+    return interp_en-gwfermi, rc_tot
+
+def calc_rc_Josh (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
+                    eqp, Elda, scgw, ims, invar_den, invar_eta, wtk, ehf):
+    import numpy as np
+    import pyfftw
+    import csv
+    from numpy.fft import fftshift,fftfreq
+    from scipy.interpolate import interp1d
+    print("calc_rc : :")
+    ddinter = 0.005 
+    newen_rc = np.arange(enmin, enmax, ddinter)
+    rc_tot =  np.zeros((np.size(newen_rc))) 
+    #pdos = np.array(pdos)
+    fftsize = FFTtsize
+    outname = "Norm_check_Jrc.dat"
+    outfile = open(outname,'w')
+
+    for ik in kptrange:
+        ikeff = ik + 1
+        for ib in bdrange:
+            ibeff = ib + bdgw_min
+            print(" ik, ib:",ikeff, ibeff)
+            eqp_kb = eqp[ik, ib]
+            ehf_kb = ehf[ik, ib]
+            if scgw == 1:
+                Elda_kb = eqp[ik, ib]
+            else:
+                Elda_kb = Elda[ik, ib]
+
+            if scgw == 1:
+                xfermi = gwfermi
+            else:
+                xfermi = lda_fermi
+            print("eqp:", eqp_kb-gwfermi)
+            print("Elda:", Elda_kb-xfermi)
+            Done = False
+            Es2 = 0
+            while not Done:
+                NewEn_min = int(en[0] + Es2)
+                Es2 += 1
+                if NewEn_min > en[0] and NewEn_min + Elda_kb > en[0]:
+                    Done = True
+            Done_max = False
+            Es = 0
+            while not Done_max:
+                NewEn_max = en[-1] - Es
+                Es += 1
+                if NewEn_max < en[-1] and NewEn_max+Elda_kb < en[-1]:
+                    Done_max = True
+            tfft_min = -2*np.pi/invar_den
+            tfft_max = 0
+            trange = np.linspace(tfft_min, tfft_max,fftsize)
+            dtfft = abs(trange[-1]-trange[0])/fftsize
+            print ("the time step is", dtfft)
+            print("the size of fft is", fftsize)
+            interpims = interp1d(en, ims[ik,ib], kind = 'linear', axis=-1)
+            newdx = invar_den  # must be chosen carefully so that 0 is
+            # included in NewEn. invar_den can be 0.1*0.5^n, or 0.2. 
+            NewEn_0 = np.arange(NewEn_min, NewEn_max, newdx)
+            
+            NewEn = NewEn_0 #[x for x in NewEn_0 if abs(x) > 1e-6]
+            NewEn = np.asarray(NewEn)
+            NewEn_size = len(NewEn)
+            #if NewEn_size == len(NewEn_0):
+            #    print("""invar_den should  be 0.1*0.5*n where n is
+            #          integer number!!!""")
+
+            #    sys.exit(0)
+            ShiftEn = NewEn + Elda_kb #np.arange(NewEn_min + Elda_kb, NewEn_max
+            ShiftIms = interpims(ShiftEn)
+            ShiftIms_0 = interpims(NewEn_0+Elda_kb)
+            gt_list = []
+            for t in trange:
+                tImag = t*1.j 
+                area_tmp = 1.0/np.pi*abs(ShiftIms)*(np.exp(-(NewEn)*tImag)-1.0+NewEn*tImag)*(1.0/((NewEn)**2))
+                ct_tmp = np.trapz(area_tmp, NewEn)
+                gt_tmp = np.exp(ct_tmp)
+                gt_list.append(gt_tmp)
+            #with open("ShiftIms_rc-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat",
+            #                      'w') as f:
+            #    writer = csv.writer(f, delimiter = '\t')
+            #    writer.writerows(zip (NewEn, ShiftIms))
+
+            denfft = 2*np.pi/abs(trange[-1]-trange[0])
+            print("the energy resolution after FFT is",denfft)
+            fften_min = -2*np.pi/dtfft
+            fften_max = 0
+            enrange = np.arange(fften_min,NewEn[-1],denfft)
+            print("IFFT of ")
+            print("kpoint = %02d" % (ikeff))
+            print("band=%02d" % (ibeff))
+
+            fft_in = pyfftw.empty_aligned(fftsize, dtype='complex128')
+            fft_out = pyfftw.empty_aligned(fftsize, dtype='complex128')
+            ifft_object = pyfftw.FFTW(fft_in, fft_out,
+                              direction='FFTW_BACKWARD',threads
+                                      = 1)
+            cw=ifft_object(gt_list)*(fftsize*dtfft)
+
+            freq = fftfreq(fftsize,dtfft)*2*np.pi
+            s_freq = fftshift(freq)  
+            s_go = fftshift(cw)
+
+            eta = 1.j*invar_eta #the eta in the theta function 
+            gw_list = []
+            w_list = np.arange(enmin,newen_rc[-1]+denfft,denfft)
+            for w in w_list:
+                Area2 = s_go/(w-ehf_kb-s_freq-eta) 
+                c = np.trapz(Area2, dx = denfft)
+                #c = 0
+                #for i in xrange(fftsize-1):
+                #    Area2 = 0.5*denfft*(s_go[i]/(w-eqp_kb-s_freq[i]-eta)
+                #                + s_go[i+1]/(w-eqp_kb-s_freq[i+1]-eta))
+                #    c += Area2
+                cwIm = 1./np.pi*c.imag
+                gw_list.append(0.5*wtk[ik]/np.pi*cwIm)
+
+            print("IFFT done .....")
+            interp_toc = interp1d(w_list, gw_list, kind='linear', axis=-1)
+            interp_en = newen_rc
+            #print("""the new energy range is (must be inside of above
+             #     range)""",interp_en[0], interp_en[-1])
+            spfkb = interp_toc(interp_en)
+            rc_tot += spfkb
+            with open ("spf_rc_Josh-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat",'w') as f:
+                writer = csv.writer(f, delimiter = '\t')
+                writer.writerows(zip(interp_en-gwfermi, spfkb/wtk[ik]))
+            #spfkb = gw_list
+            #toc_tot = [sum(i) for i in zip(toc_tot,gw_list)]
+            #outnamekb = "spf_rc-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat"
+            #outfilekb = open(outnamekb,'w')
+            #en_toc11 = []
+            #for i in xrange(len(interp_en)):
+            #    en_toc11.append(interp_en[i])
+            #    outfilekb.write("%8.4f %12.8e \n" % (interp_en[i],spfkb[i])) 
+            #outfilekb.close()
             norm = np.trapz(spfkb,interp_en)/(wtk[ik])
             print("check the renormalization : :")
             print()
@@ -693,7 +856,7 @@ def calc_rc (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin
             if abs(1-norm)>0.01:
                 print("WARNING: the renormalization is too bad!\n"+\
                       "Increase the time size to converge better.", ikeff,ibeff)
-    
-            outfile.write("%8.4f %12.8e \n" % (newdx, norm))
+            outfile.write("%14.5f \n" % (norm))
+        outfile.write("\n")
     outfile.close()
     return interp_en-gwfermi, rc_tot

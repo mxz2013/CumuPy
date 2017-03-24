@@ -63,6 +63,7 @@ def calc_multipole(scgw,Elda,lda_fermi,nkpt, nband,gwfermi,npoles, ims, kptrange
                     en3 = newen[newen>Elda_kb] # So as to avoid negative omegampole
 
                 im3 = abs(interpims(en3)/np.pi)
+
                 if en3.size == 0:
                     print()
                     print(" WARNING: QP energy is outside of given energy range!\n"+\
@@ -71,11 +72,14 @@ def calc_multipole(scgw,Elda,lda_fermi,nkpt, nband,gwfermi,npoles, ims, kptrange
                     print(" eqp[ik,ib], newen[-1]", eqp[ik,ib] , newen[-1])
                     continue
                 en3 = en3 - Elda_kb
-                if Elda_kb <= xfermi:
-                    en3 = -en3[::-1] 
-                    im3 = im3[::-1]
-                #omegai, lambdai, deltai = fit_multipole_const(en3,im3,npoles)
-                omegai, lambdai, deltai = fit_multipole_old(en3,im3,npoles) ## Matteo
+                #if Elda_kb <= xfermi:
+                #    en3 = -en3[::-1] 
+                #    im3 = im3[::-1]
+                with open("ShiftIms_toc96-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat",'w') as f:
+                    writer = csv.writer(f, delimiter = '\t')
+                    writer.writerows(zip (en3,im3))
+                omegai, lambdai, deltai = fit_multipole_const2(en3,im3,npoles)
+                #omegai, lambdai, deltai = fit_multipole_old(en3,im3,npoles) ## Matteo
                 #used this funciton. TO DO: fit_multipole_const does not work
 
                 # HERE WE MUST CHECK THAT THE NUMBER OF POLES 
@@ -125,7 +129,7 @@ def A_model_crc(x,eqpkb,beta1, beta2,wp, eta_crc):
 def calc_toc96_crc (gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
                     eqp, Elda, scgw, Eplasmon, ims, invar_den,
                     invar_eta, wtk, metal_valence, imeqp,nkpt,
-                nband,ampole,npoles,omegampole):
+                nband,npoles):
     import numpy as np
     import pyfftw
     from numpy.fft import fftshift,fftfreq
@@ -135,6 +139,8 @@ def calc_toc96_crc (gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en
     print("calc_toc96 : :")
     metal_valence = 1
     ddinter = 0.005
+    omegampole =  np.zeros((nkpt,nband,npoles))
+    ampole =  np.zeros((nkpt,nband,npoles))
     newen_toc = np.arange(enmin, enmax, ddinter)
     toc96_tot = np.zeros((np.size(newen_toc)))
     #beta_greater = np.zeros((nkpt,nband))
@@ -184,7 +190,7 @@ def calc_toc96_crc (gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en
                 Done_max_crc = False
                 Es_crc = 0
                 while not Done_max_crc:
-                    NewEn_max_crc = en[-1] - Es
+                    NewEn_max_crc = en[-1] - Es_crc
                     Es_crc += 1
                     if NewEn_max_crc < en[-1] and NewEn_max_crc+Elda_kb < en[-1]:
                         Done_max_crc = True
@@ -204,14 +210,13 @@ def calc_toc96_crc (gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en
                 NewEn_0 = np.arange(NewEn_min, NewEn_max, newdx)
                 NewEn = [x for x in NewEn_0 if abs(x) > 1e-6]
                 NewEn = np.asarray(NewEn)
-                NewEn_greater = np.arange(NewEn_max, NewEn_max_crc, newdx)
-                NewEn_lesser = np.arange(NewEn_min, newdx, newdx)
-                NewEn_crc =  np.arange(NewEn_min, NewEn_max_crc, newdx)
+                NewEn_greater = np.arange(NewEn_max, NewEn_max_crc, ddinter)
+                NewEn_lesser = np.arange(NewEn_min, Elda_kb-0.05, ddinter)
+                NewEn_crc =  np.arange(NewEn_min, NewEn_max_crc, ddinter)
                 NewEn_size = len(NewEn)
                 if NewEn[-1]>=0 and NewEn_size == len(NewEn_0):
                     print("""Zero is not in the intergration of ImSigma(w),
                           please check invar_den""")
-
                     sys.exit(0)
                 ShiftEn = NewEn + Elda_kb #np.arange(NewEn_min + Elda_kb, NewEn_max
                 ShiftIms = interpims(ShiftEn)
@@ -219,29 +224,70 @@ def calc_toc96_crc (gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en
                 ShiftIms_crc = interpims(NewEn_greater + Elda_kb )/np.pi
                 im_greater = abs(interpims(NewEn_greater))/np.pi
                 en_greater = NewEn_greater - Elda_kb
-                omega_greater, lambda_greater, delta_greater = fit_multipole_const2(en_greater,im_greater,1,0)
+               # omega_greater, lambda_greater, delta_greater = fit_multipole_const2(en_greater,im_greater,1,0)
+                lambda_greater = np.trapz(im_greater, en_greater) #np.trapz(y,x)
+                omega_greater = en_greater[im_greater.argmax()]
+                
                 #print("SKYDEBUG greater", omega_greater , lambda_greater)
                 #omega_greater, lambda_greater, delta_greater = fit_multipole(en_greater,im_greater,1)
                 #beta_greater = map(abs,lambda_greater)/(omega_greater)**2
                 beta_greater = abs(lambda_greater)/(omega_greater)**2
 
-                im_lesser = abs(interpims(NewEn))/np.pi 
-                en_lesser = NewEn - Elda_kb
+                im_lesser = abs(interpims(NewEn_lesser))/np.pi 
+                en_lesser = NewEn_lesser - Elda_kb
+                beta_lesser = abs(np.trapz(im_lesser,en_lesser))/(en_lesser[im_lesser.argmax()])**2
                 en_lesser = -en_lesser[::-1]
                 im_lesser = im_lesser[::-1]
-                #omega_lesser, lambda_lesser, delta_lesser = fit_multipole_fast(en_lesser,im_lesser,npoles)
-                omega_1, lambda_1, delta_1 = fit_multipole_const2(en_lesser,im_lesser,1)
-                #beta_lesser = abs(lambda_lesser)/(omega_lesser)**2
-                beta_lesser_1 = abs(lambda_1)/(omega_1)**2
-                #sum_beta_lesser = np.sum(beta_lesser)
-                #with open("beta_lesser.dat",'w') as f:
-                #    writer = csv.writer(f, delimiter = '\t')
-                #    writer.writerows(zip (lambda_1,omega_1))
-
-                #print("SKYDEBUG beta_lesser", beta_lesser)
-                #with open("ShiftIms_toc-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat", 'w') as f:
-                #    writer = csv.writer(f, delimiter = '\t')
-                #    writer.writerows(zip (NewEn_0, ShiftIms_0))
+                with open("ShiftIms_toc96-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat",'w') as f:
+                    writer = csv.writer(f, delimiter = '\t')
+                    writer.writerows(zip (en_lesser,im_lesser))
+                method = 'fast' # const, const2, fast, old
+                omega_les, lambda_les, delta_les = fit_multipole(en_lesser,im_lesser,npoles, method=method)#fit_multipole_const2(en_lesser,im_lesser,npoles)
+                plot_fit = 0 # can bu used for checking the fitting in unocc
+                if plot_fit == 1:
+                    print("check fitting")
+                    from multipole import write_f_as_sum_of_poles
+                    import pylab
+                    plt.figure(2)
+                    eta = 0.1
+                    enlor, flor = write_f_as_sum_of_poles(en_lesser, omega_les,
+                                                          lambda_les, delta_les, eta)
+                    plt.plot(enlor, flor,"-",label="sum of poles, eta: "+str(eta))
+                    plt.plot(en_lesser,im_lesser,"-",label="ImS(e-w)")
+                    plt.plot(omega_les,lambda_les,"go", label = "omegai, lambdai")
+                    plt.plot(omega_les,lambda_les/delta_les,"ro", label = "omegai, lambdai/deltai")
+                    plt.title("ik: "+str(ikeff)+", ib: "+str(ibeff)+", npoles: "+str(npoles))
+                    plt.legend(loc=1, prop={'size':10})
+                    pylab.savefig('imS_fit_np'+str(npoles)+'_ik'+str(ikeff)+'_ib'+str(ibeff)+"-"+str(method)+'.pdf')
+                    plt.close()
+                #if npoles > omega_les.size:
+                #    omegampole[ik,ib][:omega_les.size] = omega_les 
+                #    ampole[ik,ib][:omega_les.size] = np.true_divide(lambda_les,(np.square(omega_les)))
+                #    print()
+                #    print(" WARNING: npoles used ("+str(npoles)+") is larger"+\
+                #            " than x data array ("+str(omega_les.size)+").")
+                #    print(" Reduce npoles. You are wasting resources!!!")
+                #else:
+                #    omegampole[ik,ib] = omega_les 
+                #    ampole[ik,ib] = np.true_divide(lambda_les,(np.square(omega_les)))
+                #print(" Integral test. Compare \int\Sigma and \sum_j^N\lambda_j.")
+                #print(" 1/pi*\int\Sigma   =", np.trapz(im_lesser,en_lesser))
+                #print(" \sum_j^N\lambda_j =", np.sum(lambda_les))
+                #outname_aj = "a_j_np"+str(npoles)+".dat"
+                #outfile_aj = open(outname_aj,'w')
+                #outname_oj = "omega_j_np"+str(npoles)+".dat"
+                #outfile_oj = open(outname_oj,'w')
+                #for ipole in xrange(npoles):
+                #    for ik in xrange(nkpt):
+                #        for ib in xrange(nband):
+                #            outfile_aj.write("%10.5f"  % (ampole[ik,ib,ipole]))
+                #            outfile_oj.write("%10.5f" % (omegampole[ik,ib,ipole]))
+                #        outfile_aj.write("\n")
+                #        outfile_oj.write("\n")
+                #    outfile_aj.write("\n")
+                #    outfile_oj.write("\n")
+                #outfile_aj.close()
+                #outfile_oj.close()
                 for t in trange:
                     tImag = t*1.j 
                     area_tmp1 = 1.0/np.pi*abs(ShiftIms)*(np.exp(-(NewEn)*tImag)-1.0)*(1.0/((NewEn)**2))
@@ -277,38 +323,49 @@ def calc_toc96_crc (gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en
                     Area2 = s_go/(w-eqp_kb-s_freq-eta) 
                     c = np.trapz(Area2, dx = denfft)
                     cwIm = 1./np.pi*c.imag
-                    gw_list.append(0.5*wtk[ik]*np.exp(-beta_greater)/np.pi*cwIm)
+                    gw_list.append(0.5*np.exp(-beta_greater)/np.pi*cwIm)
 
                 print("IFFT done .....")
                 interp_toc = interp1d(w_list, gw_list, kind='linear', axis=-1)
                 interp_en = newen_toc
 
                 spfkb = interp_toc(interp_en)
-                toc96_tot += spfkb
+
                 with open("TOC96-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat", 'w') as f:
                     writer = csv.writer(f, delimiter = '\t')
-                    writer.writerows(zip (interp_en-gwfermi, spfkb/wtk[ik]))
+                    writer.writerows(zip (interp_en-gwfermi, spfkb))
 
+                toc96_tot += spfkb*wtk[ik] 
+                #print("SKYDEBUG, wtk", wtk[ik])
+                #with open("TOC96tot-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat", 'w') as f:
+                #    writer = csv.writer(f, delimiter = '\t')
+                #    writer.writerows(zip (interp_en-gwfermi,spfkb, toc96_tot ))
                 ###for unocc###
                 imeqp_unocc = abs(imeqp[ik,ib])+invar_eta
                 tmp = 1/np.pi*wtk[ik]*(imeqp_unocc)
-                #exponent =  - np.sum(ampole[ik,ib]) - beta_greater[0] 
-                exponent = -beta_lesser_1-beta_greater
+                #exponent = -np.sum(np.true_divide(lambda_les,(np.square(omega_les)))) - beta_greater 
+                exponent = -beta_lesser-beta_greater
                 #exponent = - np.sum(beta_lesser)-beta_greater
                 prefac = np.exp(exponent)*tmp
                 #akb = beta_lesser # This is a numpy array (slice)
-                akb = ampole[ik,ib] # This is a numpy array (slice)
+                akb = np.true_divide(lambda_les,(np.square(omega_les)))
+                ##ampole[ik,ib] # This is a numpy array (slice)
                 bkb =  beta_greater/npoles  # the reason of dividing nopoles
                 # is in my thesis.!!
-                omegakb = omegampole[ik,ib] # This is a numpy array (slice)
+                omegakb = omega_les #-omegampole[ik,ib] # This is a numpy array (slice)
+                #print("SKYDEBUG, akb, omegakb", akb,omegakb)
+
                 #omegakb = omega_lesser
                 tmpf = np.zeros((np.size(interp_en)), order='Fortran')
                 tmpf = f2py_calc_crc_mpole(tmpf,interp_en,bkb,prefac,akb,omegakb,eqp_kb,imeqp_unocc)
-                ftot_unocc += tmpf
                 with open("CRC_unocc-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat",
                      'w') as f:
                     writer = csv.writer(f, delimiter = '\t')
                     writer.writerows(zip (interp_en-gwfermi, tmpf/wtk[ik]))
+                ftot_unocc += tmpf
+                #with open("UNOCCtot-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat", 'w') as f:
+                #    writer = csv.writer(f, delimiter = '\t')
+                #    writer.writerows(zip (interp_en-gwfermi, ftot_unocc))
                 #Gw_unocc = wtk[ik]* A_model_crc(interp_en, eqp_kb ,beta_lesser[0],
                 #                       beta_greater[0],omega_lesser,
                 #                       imeqp_kb+eta) 
@@ -317,11 +374,12 @@ def calc_toc96_crc (gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en
                 #    writer = csv.writer(f, delimiter = '\t')
                 #    writer.writerows(zip(interp_en-gwfermi, Gw_unocc))
                 print("Calculate occupation of TOC96 : :")
-                norm = np.trapz(spfkb,interp_en)/(wtk[ik])
+                norm = np.trapz(spfkb,interp_en)
                 norm2 = norm + np.trapz(tmpf, interp_en)/(wtk[ik])
                 print("The occupation for ik, ib, is", ikeff, ibeff, norm)
     
                 outfile.write("%12.8e %12.8e\n" % (norm, norm2))
-    crc_tot = ftot_unocc + toc96_tot 
+        outfile.write("\n")
     outfile.close()
-    return interp_en-gwfermi, toc96_tot, crc_tot
+    crc_tot = ftot_unocc + toc96_tot 
+    return interp_en-gwfermi,toc96_tot,crc_tot

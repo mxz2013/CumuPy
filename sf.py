@@ -119,6 +119,10 @@ if isfile("invar.in"):
     	flag_calc_rc = int(invar['calc_rc'])
     else:
     	iflag_calc_rc = 0
+    if 'rc_Josh' in invar: # enable retarded cumulant calculation
+    	rc_Josh = int(invar['rc_Josh'])
+    else:
+    	rc_Josh = 0
     
     if 'calc_crc' in invar: #enable CRC so as TOC96 calculation
     	flag_calc_crc = int(invar['calc_crc']) # CRC implementation is not
@@ -171,6 +175,9 @@ print ("Reading invar done.")
 #npoles = int(150)  #for sampling Im\Sigma lesser to calculate crc_unocc
 nband = bdgw_max - bdgw_min + 1
 hartree = read_hartree()
+if rc_Josh == 1:
+    Sigx = read_hf()
+    ehf = hartree + Sigx
 
 if scgw == 0:
     print("""
@@ -289,13 +296,15 @@ if flag_calc_toc11 == 1:
         outfile.close()
         print(" A(\omega)_TOC11 written in", outname)
         plt.plot(interp_en,toc_tot_up,label="ftot_toc11_SpinUp");
+        plt.plot(interp_en,toc_tot_down,label="ftot_toc11_SpinDown");
+
        # print (" ### Writing out A(\omega)_TOC11..")
     else:
         print( "Calculating TOC11 begins")
         en_toc11, toc11_tot = calc_toc11_new(gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax, 
                                          eqp, Elda,scgw, Eplasmon, ims,
                                             invar_den, invar_eta, wtk,
-                                            metal_valence)
+                                            metal_valence,nkpt,nband)
         
        # print(" ### Writing out A(\omega)_TOC11...  ")
         outname = "spftot_toc11"+"_s"+str(sfac)+"_p"+str(pfac)+"_"+str(penergy)+"ev"+".dat"
@@ -329,14 +338,14 @@ if flag_calc_toc11 == 1:
 if flag_calc_crc == 1:
     print("# ------------------------------------------------ #")
     print("Calulating CRC begines::")
-    omegampole, ampole = calc_multipole (scgw,Elda,lda_fermi,nkpt,
-                                         nband,gwfermi,npoles, ims, kptrange,
-                                         bdrange,bdgw_min, eqp, en, enmin,
-                                         enmax)
+    #omegampole, ampole = calc_multipole (scgw,Elda,lda_fermi,nkpt,
+    #                                     nband,gwfermi,npoles, ims, kptrange,
+    #                                     bdrange,bdgw_min, eqp, en, enmin,
+    #                                     enmax)
     en_crc, toc96tot, crc_tot =  calc_toc96_crc (gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
                     eqp, Elda, scgw, Eplasmon, ims, invar_den,
-                    invar_eta, wtk, metal_valence, imeqp,nkpt,
-                nband,ampole,npoles,omegampole)
+                    invar_eta, wtk, metal_valence, imeqp,nkpt,nband,
+                npoles)
     
     #calc_crc(invar_eta,gwfermi, wtk, kptrange, bdrange, bdgw_min, omegampole, ampole, npoles,
     #                      beta_greater, en_toc96, toc96_tot, imeqp, eqp)
@@ -363,7 +372,7 @@ if flag_calc_rc == 1:
    # print ("Starting time (elaps, cpu): %10.6e %10.6e"% (elaps1, cpu1))
     #print (" ### Calculation of exponential A(\omega)_TOC96..  ")
     toten, spftot = calc_rc (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
-                    eqp, Elda, scgw, ims, invar_den, invar_eta, wtk) 
+                    eqp, Elda, scgw, ims, invar_den, invar_eta, wtk,nkpt,nband) 
     print (" ### Writing out A(\omega)_rc...  ")
 
     outname = "spftot_rc"+"_s"+str(sfac)+"_p"+str(pfac)+"_"+str(penergy)+"ev"+".dat"
@@ -377,6 +386,17 @@ if flag_calc_rc == 1:
     #cpu2 = time.clock() - cpu1 - c0
     #print(" Used time (elaps, cpu): %10.6e %10.6e"% (elaps2, cpu2))
     print (" ### Writing out A(\omega)_rc.")
+if rc_Josh == 1:
+
+    toten, spftot = calc_rc_Josh (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
+                    eqp, Elda, scgw, ims, invar_den, invar_eta, wtk, ehf) 
+
+    outname = "spftot_rc_Josh"+"_s"+str(sfac)+"_p"+str(pfac)+"_"+str(penergy)+"ev"+".dat"
+    outfile = open(outname,'w')
+    for i in xrange(len(toten)):
+        outfile.write("%8.4f %12.8e\n" % (toten[i], spftot[i]))
+    outfile.close()
+    plt.plot(toten,spftot,label="ftot_rc_Josh");
 
 print ("Moving back to parent directory:\n", origdir)
 chdir(newdir)

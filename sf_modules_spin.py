@@ -72,7 +72,7 @@ def calc_spf_gw_spin(bdrange, kptrange, bdgw_min, wtk, en, enmin, enmax, res,
 
 def calc_toc11_spin (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize,
                      en,enmin, enmax, eqp,Elda, scgw, Eplasmon, ims, invar_den,
-                     invar_eta, wtk, metal_valence):
+                     invar_eta, wtk, metal_valence,nkpt,nband):
     import numpy as np
     import pyfftw
     from numpy.fft import fftshift,fftfreq
@@ -85,6 +85,7 @@ def calc_toc11_spin (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize,
     toc_tot_down =  np.zeros((np.size(newen_toc))) 
     #pdos = np.array(pdos)
     fftsize = FFTtsize
+    #norm = np.zeros((nkpt,nband))
     outname = "Norm_check_toc11.dat"
     outfile = open(outname,'w')
 
