@@ -16,6 +16,7 @@ import sys
 from os.path import isfile, join, isdir
 from os import getcwd, pardir, mkdir, chdir
 
+ 
 def read_eqp_abinit():
     import numpy as np;
     if isfile('../eqp_abinit.dat'):
@@ -198,7 +199,7 @@ def read_sigfile(sigfilename, nkpt, bdgw_min, bdgw_max):
             insigfile.seek(0)
             xen = np.genfromtxt(sigfilename,usecols = 0)
             insigfile.seek(0)
-            x = np.genfromtxt(sigfilename,usecols = range(1,num_cols), filling_values = 'myNaN')
+            x = np.genfromtxt(sigfilename,usecols = xrange(1,num_cols), filling_values = 'myNaN')
     #nkpt = int(invar_dict['nkpt'])
     print("nkpt:",nkpt)
     #print("spin:",spin)
@@ -272,11 +273,12 @@ def calc_spf_gw(bdrange, kptrange, bdgw_min, wtk, en, enmin, enmax, res,
             with open("spf_gw-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat",
                  'w') as f:
                 writer = csv.writer(f, delimiter = '\t')
+ 		writer.writerow(['# w-fermi','# spf','# w-hartree-ReSigma', '# ReSigma','# ImSigma'])
                 writer.writerows(zip (newen-gwfermi, spfkb/wtk[ik],
                                       redenom, tmpres, tmpim))
             #outnamekb = "spf_gw-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat"
             #outfilekb = open(outnamekb,'w')
-            #for ien in xrange(np.size(newen)):
+            #for ien in range(np.size(newen)):
             #    newen[ien] = newen[ien] - efermi
             #    outfilekb.write("%8.4f %12.8e %12.8e %12.8e %12.8e\n" % (newen[ien], spfkb[ien], redenom[ien], tmpres[ien], tmpim[ien]))
             #outfilekb.close()
@@ -330,7 +332,7 @@ def find_eqp_resigma(en, resigma, gwfermi):
    #     print(" WARNING: Plasmarons")
     return tmpeqp, nzeros
 
-def calc_eqp_imeqp(spf_qp, wtk,bdrange, kptrange,bdgw_min, en,enmin, enmax, res, ims, hartree, gwfermi, nkpt, nband, scgw, Elda):
+def calc_eqp_imeqp(nspin,spf_qp, wtk,bdrange, kptrange,bdgw_min, en,enmin, enmax, res, ims, hartree, gwfermi, nkpt, nband, scgw, Elda):
     """
     This function calculates qp energies and corresponding
     values of the imaginary part of sigma for a set of
@@ -351,6 +353,9 @@ def calc_eqp_imeqp(spf_qp, wtk,bdrange, kptrange,bdgw_min, en,enmin, enmax, res,
     newdx = 0.005
     newen = np.arange(en[0], en[-1], newdx)
     qpspftot = np.zeros((np.size(newen)))
+    qpspftot_up = np.zeros((np.size(newen)))
+    qpspftot_down = np.zeros((np.size(newen)))
+
     #for ik in kptrange:
     #    for ib in bdrange:
     for ik in xrange(nkpt):
@@ -378,11 +383,29 @@ def calc_eqp_imeqp(spf_qp, wtk,bdrange, kptrange,bdgw_min, en,enmin, enmax, res,
                 else:
                     Elda_kb = Elda[ik,ib]
                 imeqp[ik,ib] = interpims(Elda_kb)
-            if spf_qp == 1:
+            if spf_qp == 1 and nspin == 1:
                 qpspfkb =  abs(imeqp[ik,ib])/np.pi/((newen-eqp[ik,ib])**2 + imeqp[ik,ib]**2)
-                qpspftot += qpspfkb*wtk[int(ik/2)]
+                qpspftot += qpspfkb*wtk[ik]
                 with open("spf_qp"+"-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat", 'w') as f:
                     writer = csv.writer(f, delimiter = '\t')
+ 		    writer.writerow(['# w-fermi','# QP spectra'])
+                    writer.writerows(zip (newen-gwfermi, qpspfkb))
+            if spf_qp == 1 and nspin == 2 and ik%2 == 0:
+                ikeff = int(ik/2 + 1)
+                qpspfkb =  abs(imeqp[ik,ib])/np.pi/((newen-eqp[ik,ib])**2 + imeqp[ik,ib]**2)
+                qpspftot_up += qpspfkb*wtk[int(ik/2)]
+                with open("spf_qp"+"-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+"-spin-up"+".dat", 'w') as f:
+                    writer = csv.writer(f, delimiter = '\t')
+ 		    writer.writerow(['# w-fermi','# QP spectra for spin up channel'])
+                    writer.writerows(zip (newen-gwfermi, qpspfkb))
+
+            if spf_qp == 1 and nspin == 2 and ik%2 != 0:
+                ikeff = int(ik/2 + 1)
+                qpspfkb =  abs(imeqp[ik,ib])/np.pi/((newen-eqp[ik,ib])**2 + imeqp[ik,ib]**2)
+                qpspftot_down += qpspfkb*wtk[int(ik/2)]
+                with open("spf_qp"+"-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+"-spin-down"+".dat", 'w') as f:
+                    writer = csv.writer(f, delimiter = '\t')
+ 		    writer.writerow(['# w-fermi','# QP spectra for spin down channel'])
                     writer.writerows(zip (newen-gwfermi, qpspfkb))
           #  else:
           #      imeqp[ik,ib] = interp(eqp[ik,ib], en, ims[ik,ib])
@@ -398,13 +421,19 @@ def calc_eqp_imeqp(spf_qp, wtk,bdrange, kptrange,bdgw_min, en,enmin, enmax, res,
         outfile3.write("\n")
     outfile2.close()
     outfile3.close()
-
-    with open("spftot_qp.dat", 'w') as f:
-        writer = csv.writer(f, delimiter = '\t')
-        writer.writerows(zip (newen-gwfermi, qpspftot))
+    
+    if spf_qp == 1 and nspin == 1:
+        with open("spftot_qp.dat", 'w') as f:
+            writer = csv.writer(f, delimiter = '\t')
+ 	    writer.writerow(['# w-fermi','# QP spectra'])
+            writer.writerows(zip (newen-gwfermi, qpspftot))
+    if spf_qp == 1 and nspin == 2:
+        with open("spftot_qp.dat", 'w') as f:
+            writer = csv.writer(f, delimiter = '\t')
+ 	    writer.writerow(['# w-fermi','# QP spectra for spin up', '# QP spectra for spin down'])
+            writer.writerows(zip (newen-gwfermi, qpspftot_up, qpspftot_down))
     print("QP spectra calculation done!")
     return eqp, imeqp
-
 
 def calc_toc11_new (gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
                     eqp, Elda, scgw, Eplasmon, ims, invar_den,
@@ -499,6 +528,7 @@ def calc_toc11_new (gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en
                 #    writer.writerows(zip (NewEn, ShiftIms))
                 with open("ShiftIms_toc-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat", 'w') as f:
                     writer = csv.writer(f, delimiter = '\t')
+ 		    writer.writerow(['# w','# ImSigma(w-eqp)'])
                     writer.writerows(zip (NewEn_0, ShiftIms_0))
                 for t in trange:
                     tImag = t*1.j 
@@ -545,11 +575,12 @@ def calc_toc11_new (gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en
                 toc_tot += spfkb
                 with open("TOC11-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat", 'w') as f:
                     writer = csv.writer(f, delimiter = '\t')
+ 		    writer.writerow(['# w-fermi','# spf_toc11'])
                     writer.writerows(zip (interp_en-gwfermi, spfkb/wtk[ik]))
                 #outnamekb = "TOC11-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat"
                 #outfilekb = open(outnamekb,'w')
                 #en_toc11 = []
-                #for i in xrange(len(interp_en)):
+                #for i in range(len(interp_en)):
                 #    en_toc11.append(interp_en[i])
                 #    outfilekb.write("%8.4f %12.8e \n" % (interp_en[i],spfkb[i])) 
                 #outfilekb.close()
@@ -646,6 +677,7 @@ def calc_rc (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin
             with open("ShiftIms_rc-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat",
                                   'w') as f:
                 writer = csv.writer(f, delimiter = '\t')
+ 		writer.writerow(['# w','# ImSigma(w-eqp)'])
                 writer.writerows(zip (NewEn, ShiftIms))
 
             denfft = 2*np.pi/abs(trange[-1]-trange[0])
@@ -675,7 +707,7 @@ def calc_rc (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin
                 Area2 = s_go/(w-eqp_kb-s_freq-eta) 
                 c = np.trapz(Area2, dx = denfft)
                 #c = 0
-                #for i in xrange(fftsize-1):
+                #for i in range(fftsize-1):
                 #    Area2 = 0.5*denfft*(s_go[i]/(w-eqp_kb-s_freq[i]-eta)
                 #                + s_go[i+1]/(w-eqp_kb-s_freq[i+1]-eta))
                 #    c += Area2
@@ -691,13 +723,14 @@ def calc_rc (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin
             rc_tot += spfkb
             with open ("spf_rc-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat",'w') as f:
                 writer = csv.writer(f, delimiter = '\t')
+ 		writer.writerow(['# w-fermi','# spf_rc'])
                 writer.writerows(zip(interp_en-gwfermi, spfkb/wtk[ik]))
             #spfkb = gw_list
             #toc_tot = [sum(i) for i in zip(toc_tot,gw_list)]
             #outnamekb = "spf_rc-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat"
             #outfilekb = open(outnamekb,'w')
             #en_toc11 = []
-            #for i in xrange(len(interp_en)):
+            #for i in range(len(interp_en)):
             #    en_toc11.append(interp_en[i])
             #    outfilekb.write("%8.4f %12.8e \n" % (interp_en[i],spfkb[i])) 
             #outfilekb.close()
@@ -823,7 +856,7 @@ def calc_rc_Josh (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,
                 Area2 = s_go/(w-ehf_kb-s_freq-eta) 
                 c = np.trapz(Area2, dx = denfft)
                 #c = 0
-                #for i in xrange(fftsize-1):
+                #for i in range(fftsize-1):
                 #    Area2 = 0.5*denfft*(s_go[i]/(w-eqp_kb-s_freq[i]-eta)
                 #                + s_go[i+1]/(w-eqp_kb-s_freq[i+1]-eta))
                 #    c += Area2
@@ -845,7 +878,7 @@ def calc_rc_Josh (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,
             #outnamekb = "spf_rc-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat"
             #outfilekb = open(outnamekb,'w')
             #en_toc11 = []
-            #for i in xrange(len(interp_en)):
+            #for i in range(len(interp_en)):
             #    en_toc11.append(interp_en[i])
             #    outfilekb.write("%8.4f %12.8e \n" % (interp_en[i],spfkb[i])) 
             #outfilekb.close()

@@ -46,6 +46,7 @@ def calc_spf_gw_spin(bdrange, kptrange, bdgw_min, wtk, en, enmin, enmax, res,
                 with open("spf_gw-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+"-spin-up"+".dat",
                     'w') as f:
                     writer = csv.writer(f, delimiter = '\t')
+                    writer.writerow(['# w-fermi','# spf','# w-hartree-ReSigma', '# ReSigma','# ImSigma'])
                     writer.writerows(zip(newen-gwfermi, spfkb/wtk[ikwtk1],
                                          redenom, tmpres, tmpim))
         else:
@@ -65,6 +66,7 @@ def calc_spf_gw_spin(bdrange, kptrange, bdgw_min, wtk, en, enmin, enmax, res,
                 with open("spf_gw-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+"-spin-down"+".dat",
                     'w') as f:
                     writer = csv.writer(f, delimiter = '\t')
+                    writer.writerow(['# w-fermi','# spf','# w-hartree-ReSigma', '# ReSigma','# ImSigma'])
                     writer.writerows(zip(newen-gwfermi, spfkb/wtk[ikwtk2],
                                          redenom, tmpres, tmpim))
 

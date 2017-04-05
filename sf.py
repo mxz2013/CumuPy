@@ -240,7 +240,7 @@ if abinit_eqp == 1:
         writer = csv.writer(f, delimiter = '\t')
         writer.writerows(zip (eqp-gwfermi))
 else:
-    eqp, imeqp = calc_eqp_imeqp(spf_qp,wtk,bdrange,kptrange,bdgw_min, en, enmin, enmax, res, ims,
+    eqp, imeqp = calc_eqp_imeqp(nspin,spf_qp,wtk,bdrange,kptrange,bdgw_min, en, enmin, enmax, res, ims,
                                 hartree, gwfermi, nkpt, nband, scgw, Elda)
 
 ### ================================= ###
