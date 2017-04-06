@@ -16,6 +16,11 @@ import sys
 from os.path import isfile, join, isdir
 from os import getcwd, pardir, mkdir, chdir
 
+def nonblank_lines(f):
+   for l in f:
+      line = l.rstrip()
+      if line:
+         yield line
  
 def read_eqp_abinit():
     import numpy as np;
@@ -97,6 +102,91 @@ def read_lda():
         print ("E_lda.dat not found!")
         sys.exit(1)
     return Elda
+def read_pjt_new(nkpt,nband,bdgw_min,nspin):
+    import numpy as np
+    if isfile("pjt_s.dat") and isfile("pjt_p.dat") and isfile("pjt_d.dat"):
+        lines1 = [line.rstrip('\n') for line in open('pjt_s.dat')]
+        lines2 = [line.rstrip('\n') for line in open('pjt_p.dat')]
+        lines3 = [line.rstrip('\n') for line in open('pjt_d.dat')]
+        s_nk = []
+        s_ns = []
+        s_nb = []
+        s_pjt = []
+        p_pjt = []
+        d_pjt = []
+        for plotPair in nonblank_lines(lines1):
+            if not plotPair.startswith('#'):
+                data =  plotPair.split()
+                s_ns.append(int(data[0].rstrip('\r')))
+                s_nk.append(int(data[1].rstrip('\r')))
+                s_nb.append(int(data[2].rstrip('\r')))
+                s_pjt.append(float(data[3].rstrip('\r')))
+        for plotPair in nonblank_lines(lines2):
+            if not plotPair.startswith('#'):
+                data =  plotPair.split()
+                p_pjt.append(float(data[3].rstrip('\r')))
+        for plotPair in nonblank_lines(lines3):
+            if not plotPair.startswith('#'):
+                data =  plotPair.split()
+                d_pjt.append(float(data[3].rstrip('\r')))
+    else:
+        print ("pjt_x.dat not found!")
+        sys.exit(1)
+    tmp_k = 1
+    spjt_new = []
+    ppjt_new = []
+    dpjt_new = []
+
+    while tmp_k <= int(nkpt/nspin):
+        tmp_s = 1
+        while tmp_s <= nspin:
+            for i in xrange(len(s_ns)):
+                if s_nk[i] == tmp_k and s_ns[i] == tmp_s and s_nb[i] >= bdgw_min:
+                    spjt_new.append(s_pjt[i])
+                    ppjt_new.append(p_pjt[i])
+                    dpjt_new.append(d_pjt[i])
+            tmp_s += 1
+        tmp_k += 1
+    spjt=np.zeros((nkpt, nband))
+    ppjt=np.zeros((nkpt, nband))
+    dpjt=np.zeros((nkpt, nband))
+
+    for i in xrange(nband):
+       spjt[:,i] = spjt_new[i::nband]
+       ppjt[:,i] = ppjt_new[i::nband]
+       dpjt[:,i] = dpjt_new[i::nband]
+
+
+    return spjt, ppjt, dpjt
+
+def read_pjt():
+    import numpy as np;
+    if isfile("pjt_s.dat") and isfile("pjt_p.dat") and isfile("pjt_d.dat"):
+        print(" Reading file pjt.dat... ")
+        pjt1file = open("pjt_s.dat");
+        pjt2file = open("pjt_p.dat");
+        pjt3file = open("pjt_d.dat");
+        pjt1 = [];
+        pjt2 = [];
+        pjt3 = [];
+        for line in pjt1file.readlines():
+            pjt1.append(map(float,line.split()));
+        pjt1file.close()
+        for line in pjt2file.readlines():
+            pjt2.append(map(float,line.split()));
+        pjt2file.close()
+        for line in pjt3file.readlines():
+            pjt3.append(map(float,line.split()));
+        pjt3file.close()
+        print("Done.")
+        pjt1 = np.array(pjt1);
+        pjt2 = np.array(pjt2);
+        pjt3 = np.array(pjt3);
+
+    else:
+        print ("pjt.dat not found!")
+        sys.exit(1)
+    return pjt1, pjt2, pjt3
 
 def read_wtk():
     import numpy as np;
@@ -238,7 +328,7 @@ def read_sigfile(sigfilename, nkpt, bdgw_min, bdgw_max):
 
     return en, res, ims 
 
-def calc_spf_gw(bdrange, kptrange, bdgw_min, wtk, en, enmin, enmax, res,
+def calc_spf_gw(pjt1,pjt2,pjt3,bdrange, kptrange, bdgw_min, wtk, en, enmin, enmax, res,
                 ims, hartree, gwfermi, invar_eta):
     import numpy as np;
     import csv
@@ -255,6 +345,9 @@ def calc_spf_gw(bdrange, kptrange, bdgw_min, wtk, en, enmin, enmax, res,
         newen = np.arange(enmin,enmax,newdx)
     print (" ### Interpolation and calculation of A(\omega)_GW...  ")
     spftot = np.zeros((np.size(newen)));
+    spftot_pjt1 = np.zeros((np.size(newen)));
+    spftot_pjt2 = np.zeros((np.size(newen)));
+    spftot_pjt3 = np.zeros((np.size(newen)));
     # Here we interpolate re and im sigma
     # for each band and k point
     for ik in kptrange:
@@ -268,13 +361,21 @@ def calc_spf_gw(bdrange, kptrange, bdgw_min, wtk, en, enmin, enmax, res,
             tmpres = interpres(newen)
             redenom = newen - hartree[ik,ib] - interpres(newen)
             tmpim = interpims(newen)
-            spfkb = wtk[ik] * abs(tmpim)/np.pi/(redenom**2 + tmpim**2)
-            spftot += spfkb
+            spfkb =  abs(tmpim)/np.pi/(redenom**2 + tmpim**2)
+            spfkb_pjt1 = spfkb*pjt1[ik,ib] 
+            spfkb_pjt2 = spfkb*pjt2[ik,ib] 
+            spfkb_pjt3 = spfkb*pjt3[ik,ib] 
+
+            spftot += spfkb*wtk[ik]
+            spftot_pjt1 += spfkb*wtk[ik]*pjt1[ik,ib]
+            spftot_pjt2 += spfkb*wtk[ik]*pjt2[ik,ib]
+            spftot_pjt3 += spfkb*wtk[ik]*pjt3[ik,ib]
+            
             with open("spf_gw-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat",
                  'w') as f:
                 writer = csv.writer(f, delimiter = '\t')
- 		writer.writerow(['# w-fermi','# spf','# w-hartree-ReSigma', '# ReSigma','# ImSigma'])
-                writer.writerows(zip (newen-gwfermi, spfkb/wtk[ik],
+ 		writer.writerow(['# w-fermi','# spf','# spf_s','# spf_p','# spf_d','# w-hartree-ReSigma', '# ReSigma','# ImSigma'])
+                writer.writerows(zip (newen-gwfermi, spfkb,spfkb_pjt1, spfkb_pjt2, spfkb_pjt3,
                                       redenom, tmpres, tmpim))
             #outnamekb = "spf_gw-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat"
             #outfilekb = open(outnamekb,'w')
@@ -282,7 +383,7 @@ def calc_spf_gw(bdrange, kptrange, bdgw_min, wtk, en, enmin, enmax, res,
             #    newen[ien] = newen[ien] - efermi
             #    outfilekb.write("%8.4f %12.8e %12.8e %12.8e %12.8e\n" % (newen[ien], spfkb[ien], redenom[ien], tmpres[ien], tmpim[ien]))
             #outfilekb.close()
-    return newen-gwfermi, spftot
+    return newen-gwfermi, spftot, spftot_pjt1, spftot_pjt2, spftot_pjt3
 
 
 

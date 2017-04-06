@@ -32,6 +32,10 @@ if isfile("invar.in"):
         flag_wtk = int(invar['flag_wtk']);
     else:
         flag_wtk = 1;
+    if 'flag_pjt' in invar:  ## using wtk.dat or not 
+        flag_pjt = int(invar['flag_pjt']);
+    else:
+        flag_pjt = 0;
     if 'scgw' in invar:  #one-shot G0W0 or scGW self-energy
         scgw = int(invar['scgw']); 
     else:
@@ -200,6 +204,15 @@ else:
           WARNING: Weight of k points are neglected!
          """)
     wtk = [1]*nkpt
+if flag_pjt == 1:
+    pjt1, pjt2, pjt3 =read_pjt_new(nkpt,nband,bdgw_min,nspin) #  read_pjt()
+else:
+    print("""
+          WARNING:  no projections of s, p, or d!
+         """)
+    pjt1 = np.zeros((nkpt,nband))
+    pjt2 = np.zeros((nkpt,nband))
+    pjt3 = np.zeros((nkpt,nband))
 
 en, res, ims = read_sigfile(sigfilename, nkpt, bdgw_min, bdgw_max)
 
@@ -251,52 +264,80 @@ if flag_calc_gw == 1:
     print(" # ------------------------------------------------ # ")
     if nspin == 2:
         from sf_modules_spin import calc_spf_gw_spin
-        newen, spftot_up, spftot_down = calc_spf_gw_spin(bdrange, kptrange,
+        newen, spftot_up,up1,up2,up3, spftot_down, d1,d2,d3 = calc_spf_gw_spin(pjt1,pjt2,pjt3,bdrange, kptrange,
                                                          bdgw_min, wtk, en, enmin, enmax,
                                                          res,ims, hartree, gwfermi)
        # print(" ### Writing out A(\omega)_GW...  ")
-        outname = "spftot_gw"+"_s"+str(sfac)+"_p"+str(pfac)+"_"+str(penergy)+"ev"+".dat"
-        outfile = open(outname,'w')
-        for i in xrange(np.size(newen)):
-            outfile.write("%7.4f %15.10e %15.10e\n"% (newen[i],
-                                                      spftot_up[i], spftot_down[i])) # Dump string representations of arrays
-        outfile.close()
-        print(" A(\omega)_GW written in", outname)
+        with open("spftot_gw.dat",'w') as f:
+             writer = csv.writer(f, delimiter = '\t')
+             writer.writerow(['# w-fermi','# spftot_up','# spftot_up_s','# spftot_up_p','# spftot_up_d','# spftot_down','# spftot_down_s','# spftot_down_p','# spftot_down_d'])
+             writer.writerows(zip( newen, spftot_up, up1,up2,up3, spftot_down, d1,d2,d3))
+        #outname = "spftot_gw"+"_s"+str(sfac)+"_p"+str(pfac)+"_"+str(penergy)+"ev"+".dat"
+        #outfile = open(outname,'w')
+        #for i in xrange(np.size(newen)):
+        #    outfile.write("%7.4f %15.10e %15.10e\n"% (newen[i],
+        #                                              spftot_up[i], spftot_down[i])) # Dump string representations of arrays
+        #outfile.close()
+        #print(" A(\omega)_GW written in", outname)
         plt.plot(newen,spftot_up,label="ftot_gw_SpinUp")
+        plt.plot(newen,spftot_down,label="ftot_gw_SpinDown")
+
        # plt.plot( newen,spftot_down,label="ftot_gw_SpinDown")
 
     elif nspin == 1:
-        newen, spftot = calc_spf_gw(bdrange, kptrange, bdgw_min, wtk, en, enmin, enmax, res,
-                    ims, hartree, gwfermi, invar_eta)
+        newen, spftot, spftot_pjt1, spftot_pjt2, spftot_pjt3 = calc_spf_gw(pjt1,pjt2,pjt3bdrange, kptrange, bdgw_min, wtk, en, enmin, enmax, res, ims, hartree, gwfermi, invar_eta)
        # print(" ### Writing out A(\omega)_GW...  ")
-        outname = "spftot_gw"+"_s"+str(sfac)+"_p"+str(pfac)+"_"+str(penergy)+"ev"+".dat"
-        outfile = open(outname,'w')
-        for i in xrange(np.size(newen)):
-            outfile.write("%7.4f %15.10e\n"% (newen[i],spftot[i])) # Dump string representations of arrays
-        outfile.close()
-        print(" A(\omega)_GW written in", outname)
+        with open("spftot_gw.dat",'w') as f:
+             writer = csv.writer(f, delimiter = '\t')
+             writer.writerow(['# w-fermi','# spftot','# spftot_s','# spftot_p','# spftot_d'])
+             writer.writerows(zip( newen, spftot, spftot_pjt1, spftot_pjt2, spftot_pjt3))
+
+        #outname = "spftot_gw"+"_s"+str(sfac)+"_p"+str(pfac)+"_"+str(penergy)+"ev"+".dat"
+        #outfile = open(outname,'w')
+        #for i in xrange(np.size(newen)):
+        #    outfile.write("%7.4f %15.10e\n"% (newen[i],spftot[i])) # Dump string representations of arrays
+        #outfile.close()
+        #print(" A(\omega)_GW written in", outname)
         plt.plot(newen,spftot,label="ftot_gw");
 
 if flag_calc_toc11 == 1:
     if nspin == 2: 
         from sf_modules_spin import calc_toc11_spin
-
         print( "Calculating spin polarized TOC11 begins")
-        interp_en, toc_tot_up, toc_tot_down = calc_toc11_spin(gwfermi,lda_fermi,bdrange, bdgw_min, kptrange,
-                        FFTtsize, en,enmin, enmax, eqp,Elda,scgw,Eplasmon, ims,
-                        invar_den, invar_eta, wtk, metal_valence)
+        interp_en, up, up1, up2, up3, down, d1, d2, d3 =  calc_toc11_spin(pjt1,
+                                                                          pjt2,
+                                                                          pjt3,
+                                                                          gwfermi,
+                                                                          lda_fermi,
+                                                                          bdrange,
+                                                                          bdgw_min,
+                                                                          kptrange,
+                                                                          FFTtsize,
+                                                                          en,
+                                                                          enmin,
+                                                                          enmax,
+                                                                          eqp,
+                                                                          Elda,
+                                                                          scgw,
+                                                                          Eplasmon,
+                                                                          ims, invar_den, invar_eta, wtk, metal_valence)
         
+
+        with open("spftot_toc11.dat",'w') as f:
+             writer = csv.writer(f, delimiter = '\t')
+             writer.writerow(['# w-fermi','# spftot_up','# spftot_up_s','# spftot_up_p','# spftot_up_d','# spftot_down','# spftot_down_s','# spftot_down_p','# spftot_down_d'])
+             writer.writerows(zip( newen, up, up1,up2,up3, down, d1,d2,d3))
        # print(" ### Writing out A(\omega)_TOC11...  ")
 
-        outname = "spftot_toc11"+"_s"+str(sfac)+"_p"+str(pfac)+"_"+str(penergy)+"ev"+".dat"
-        outfile = open(outname,'w')
-        for i in xrange(len(interp_en)):
-            outfile.write("%8.4f %12.8e %12.8e\n" % (interp_en[i], toc_tot_up[i],
-                                              toc_tot_down[i]))
-        outfile.close()
-        print(" A(\omega)_TOC11 written in", outname)
-        plt.plot(interp_en,toc_tot_up,label="ftot_toc11_SpinUp");
-        plt.plot(interp_en,toc_tot_down,label="ftot_toc11_SpinDown");
+        #outname = "spftot_toc11"+"_s"+str(sfac)+"_p"+str(pfac)+"_"+str(penergy)+"ev"+".dat"
+        #outfile = open(outname,'w')
+        #for i in xrange(len(interp_en)):
+        #    outfile.write("%8.4f %12.8e %12.8e\n" % (interp_en[i], toc_tot_up[i],
+        #                                      toc_tot_down[i]))
+        #outfile.close()
+        #print(" A(\omega)_TOC11 written in", outname)
+        plt.plot(interp_en,up,label="ftot_toc11_SpinUp");
+        plt.plot(interp_en,down,label="ftot_toc11_SpinDown");
 
        # print (" ### Writing out A(\omega)_TOC11..")
     else:

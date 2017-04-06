@@ -12,7 +12,7 @@ import csv
 from os.path import isfile, join, isdir
 from os import getcwd, pardir, mkdir, chdir
 
-def calc_spf_gw_spin(bdrange, kptrange, bdgw_min, wtk, en, enmin, enmax, res,
+def calc_spf_gw_spin(pjt1,pjt2,pjt3,bdrange, kptrange, bdgw_min, wtk, en, enmin, enmax, res,
                      ims, hartree, gwfermi):
     print("calc_spf_gw_spin : :")
     import numpy as np;
@@ -28,6 +28,12 @@ def calc_spf_gw_spin(bdrange, kptrange, bdgw_min, wtk, en, enmin, enmax, res,
     print (" ### Interpolation and calculation of spin-polarized A(\omega)_GW ...  ")
     spftot_up = np.zeros((np.size(newen)));
     spftot_down = np.zeros((np.size(newen)));
+    spftot_up1 = np.zeros((np.size(newen)));
+    spftot_down1 = np.zeros((np.size(newen)));
+    spftot_up2 = np.zeros((np.size(newen)));
+    spftot_down2 = np.zeros((np.size(newen)));
+    spftot_up3 = np.zeros((np.size(newen)));
+    spftot_down3 = np.zeros((np.size(newen)));
     for ik in kptrange:
         if ik %2 == 0: #spin up chanel 
             ikeff = int(ik/2 + 1)
@@ -41,13 +47,20 @@ def calc_spf_gw_spin(bdrange, kptrange, bdgw_min, wtk, en, enmin, enmax, res,
                 redenom = newen - hartree[ik,ib] - interpres(newen)
                 #print "ik ib minband maxband ibeff hartree[ik,ib]", ik, ib, minband, maxband, ibeff, hartree[ik,ib]
                 tmpim = interpims(newen)
-                spfkb = wtk[ikwtk1] * abs(tmpim)/np.pi/(redenom**2 + tmpim**2)
-                spftot_up += spfkb
+                spfkb = abs(tmpim)/np.pi/(redenom**2 + tmpim**2)
+                spfkb1 = spfkb*pjt1[ik,ib]
+                spfkb2 = spfkb*pjt2[ik,ib]
+                spfkb3 = spfkb*pjt3[ik,ib]
+                spftot_up += spfkb*wtk[ikwtk1]
+                spftot_up1 += spfkb*wtk[ikwtk1]*pjt1[ik,ib]
+                spftot_up2 += spfkb*wtk[ikwtk1]*pjt2[ik,ib]
+                spftot_up3 += spfkb*wtk[ikwtk1]*pjt3[ik,ib]
+
                 with open("spf_gw-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+"-spin-up"+".dat",
                     'w') as f:
                     writer = csv.writer(f, delimiter = '\t')
-                    writer.writerow(['# w-fermi','# spf','# w-hartree-ReSigma', '# ReSigma','# ImSigma'])
-                    writer.writerows(zip(newen-gwfermi, spfkb/wtk[ikwtk1],
+                    writer.writerow(['# w-fermi','# spf','# spf_s','# spf_p','# spf_d','# w-hartree-ReSigma', '# ReSigma','# ImSigma'])
+                    writer.writerows(zip(newen-gwfermi, spfkb,spfkb1, spfkb2, spfkb3,
                                          redenom, tmpres, tmpim))
         else:
             ikeff = int(ik/2 + 1)
@@ -61,20 +74,28 @@ def calc_spf_gw_spin(bdrange, kptrange, bdgw_min, wtk, en, enmin, enmax, res,
                 redenom = newen - hartree[ik,ib] - interpres(newen)
                 #print "ik ib minband maxband ibeff hartree[ik,ib]", ik, ib, minband, maxband, ibeff, hartree[ik,ib]
                 tmpim = interpims(newen)
-                spfkb = wtk[ikwtk2] * abs(tmpim)/np.pi/(redenom**2 + tmpim**2)
-                spftot_down += spfkb
+
+                spfkb = abs(tmpim)/np.pi/(redenom**2 + tmpim**2)
+                spfkb1 = spfkb*pjt1[ik,ib]
+                spfkb2 = spfkb*pjt2[ik,ib]
+                spfkb3 = spfkb*pjt3[ik,ib]
+                spftot_down += spfkb*wtk[ikwtk1]
+                spftot_down1 += spfkb*wtk[ikwtk2]*pjt1[ik,ib]
+                spftot_down2 += spfkb*wtk[ikwtk2]*pjt2[ik,ib]
+                spftot_down3 += spfkb*wtk[ikwtk2]*pjt3[ik,ib]
+
                 with open("spf_gw-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+"-spin-down"+".dat",
                     'w') as f:
                     writer = csv.writer(f, delimiter = '\t')
-                    writer.writerow(['# w-fermi','# spf','# w-hartree-ReSigma', '# ReSigma','# ImSigma'])
-                    writer.writerows(zip(newen-gwfermi, spfkb/wtk[ikwtk2],
+                    writer.writerow(['# w-fermi','# spf','# spf_s','# spf_p','# spf_d','# w-hartree-ReSigma', '# ReSigma','# ImSigma'])
+                    writer.writerows(zip(newen-gwfermi, spfkb,spfkb1, spfkb2, spfkb3,
                                          redenom, tmpres, tmpim))
 
-    return newen-gwfermi, spftot_up, spftot_down
+    return newen-gwfermi, spftot_up,  spftot_up1, spftot_up2,spftot_up3,spftot_down,spftot_down1,spftot_down2,spftot_down3
 
-def calc_toc11_spin (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize,
-                     en,enmin, enmax, eqp,Elda, scgw, Eplasmon, ims, invar_den,
-                     invar_eta, wtk, metal_valence,nkpt,nband):
+def calc_toc11_spin(pjt1, pjt2, pjt3, gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize,
+                     en, enmin, enmax, eqp, Elda, scgw, Eplasmon, ims, invar_den,
+                     invar_eta, wtk, metal_valence):
     import numpy as np
     import pyfftw
     from numpy.fft import fftshift,fftfreq
@@ -85,12 +106,17 @@ def calc_toc11_spin (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize,
     newen_toc = np.arange(enmin, enmax, ddinter)
     toc_tot_up =  np.zeros((np.size(newen_toc))) 
     toc_tot_down =  np.zeros((np.size(newen_toc))) 
+    toc_tot_up1 =  np.zeros((np.size(newen_toc))) 
+    toc_tot_down1 =  np.zeros((np.size(newen_toc))) 
+    toc_tot_up2 =  np.zeros((np.size(newen_toc))) 
+    toc_tot_down2 =  np.zeros((np.size(newen_toc))) 
+    toc_tot_up3 =  np.zeros((np.size(newen_toc))) 
+    toc_tot_down3 =  np.zeros((np.size(newen_toc))) 
     #pdos = np.array(pdos)
     fftsize = FFTtsize
     #norm = np.zeros((nkpt,nband))
     outname = "Norm_check_toc11.dat"
     outfile = open(outname,'w')
-
     for ik in kptrange:
         if ik %2 == 0:
             ikeff = int(ik/2 + 1)
@@ -195,19 +221,26 @@ def calc_toc11_spin (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize,
                         Area2 = s_go/(w-eqp_kb-s_freq-eta) 
                         c = np.trapz(Area2, dx = denfft)
                         cwIm = 1./np.pi*c.imag
-                        gw_list.append(0.5*wtk[ikwtk1]/np.pi*cwIm)
+                        gw_list.append(0.5/np.pi*cwIm)
 
                     print("IFFT done .....")
                     interp_toc = interp1d(w_list, gw_list, kind='linear', axis=-1)
                     interp_en = newen_toc
 
                     spfkb = interp_toc(interp_en)
-                    toc_tot_up += spfkb
+                    spfkb1 = spfkb*pjt1[ik,ib]  
+                    spfkb2 = spfkb*pjt2[ik,ib] 
+                    spfkb3 = spfkb*pjt3[ik,ib] 
+                    toc_tot_up += spfkb*wtk[ikwtk1]
+                    toc_tot_up1 += spfkb*wtk[ikwtk1]*pjt1[ik,ib]
+                    toc_tot_up2 += spfkb*wtk[ikwtk1]*pjt2[ik,ib]
+                    toc_tot_up3 += spfkb*wtk[ikwtk1]*pjt3[ik,ib]
                     with open("TOC11-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+"-up"+".dat", 'w') as f:
                         writer = csv.writer(f, delimiter = '\t')
+                        writer.writerow(['# w-fermi','# spf','# spf_s','# spf_p','# spf_d'])
                         writer.writerows(zip (interp_en-gwfermi,
-                                              spfkb/wtk[ikwtk1]))
-                    norm1 = np.trapz(spfkb,interp_en)/(wtk[ikwtk1])
+                                              spfkb,spfkb1,spfkb2,spfkb3))
+                    norm1 = np.trapz(spfkb,interp_en)
                     print("the normalization of the spectral function is",norm1)
                     if abs(1-norm1)>0.01:
                         print("WARNING: the renormalization of ik,ib is too bad!\n"+\
@@ -215,7 +248,6 @@ def calc_toc11_spin (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize,
     
         else: 
             print( " spin down channel, k point = %02d " % (ikeff))
-
             ikeff = int(ik/2 + 1)
             ikwtk2 = int(ik/2)
             for ib in bdrange:
@@ -317,19 +349,25 @@ def calc_toc11_spin (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize,
                         Area2 = s_go/(w-eqp_kb-s_freq-eta) 
                         c = np.trapz(Area2, dx = denfft)
                         cwIm = 1./np.pi*c.imag
-                        gw_list.append(0.5*wtk[ikwtk2]/np.pi*cwIm)
+                        gw_list.append(0.5/np.pi*cwIm)
 
                     print("IFFT done .....")
                     interp_toc = interp1d(w_list, gw_list, kind='linear', axis=-1)
                     interp_en = newen_toc
-
                     spfkb = interp_toc(interp_en)
-                    toc_tot_down += spfkb
+                    spfkb1 = spfkb*pjt1[ik,ib]  
+                    spfkb2 = spfkb*pjt2[ik,ib] 
+                    spfkb3 = spfkb*pjt3[ik,ib] 
+                    toc_tot_down += spfkb*wtk[ikwtk2]
+                    toc_tot_down1 += spfkb*wtk[ikwtk2]*pjt1[ik,ib]
+                    toc_tot_down2 += spfkb*wtk[ikwtk2]*pjt2[ik,ib]
+                    toc_tot_down3 += spfkb*wtk[ikwtk2]*pjt3[ik,ib]
                     with open("TOC11-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+"-down"+".dat", 'w') as f:
                         writer = csv.writer(f, delimiter = '\t')
+                        writer.writerow(['# w-fermi','# spf','# spf_s','# spf_p','# spf_d'])
                         writer.writerows(zip (interp_en-gwfermi,
-                                              spfkb/wtk[ikwtk2]))
-                    norm2 = np.trapz(spfkb,interp_en)/(wtk[ikwtk2])
+                                              spfkb,spfkb1,spfkb2,spfkb3))
+                    norm2 = np.trapz(spfkb,interp_en)
                     print("the normalization of the spectral function is",norm2)
                     if abs(1-norm2)>0.01:
                         print("WARNING: the renormalization of ik,ib is too bad!\n"+\
@@ -337,5 +375,5 @@ def calc_toc11_spin (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize,
                     outfile.write("%12.8e %12.8e \n" %( norm1, norm2))
 
     outfile.close()
-    return interp_en-gwfermi, toc_tot_up, toc_tot_down
+    return interp_en-gwfermi,toc_tot_up,toc_tot_up1,toc_tot_up2,toc_tot_up3, toc_tot_down,toc_tot_down1,toc_tot_down2,toc_tot_down3
 
