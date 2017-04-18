@@ -285,7 +285,7 @@ if flag_calc_gw == 1:
        # plt.plot( newen,spftot_down,label="ftot_gw_SpinDown")
 
     elif nspin == 1:
-        newen, spftot, spftot_pjt1, spftot_pjt2, spftot_pjt3 = calc_spf_gw(pjt1,pjt2,pjt3bdrange, kptrange, bdgw_min, wtk, en, enmin, enmax, res, ims, hartree, gwfermi, invar_eta)
+        newen, spftot, spftot_pjt1, spftot_pjt2, spftot_pjt3 = calc_spf_gw(pjt1,pjt2,pjt3,bdrange, kptrange, bdgw_min, wtk, en, enmin, enmax, res, ims, hartree, gwfermi, invar_eta)
        # print(" ### Writing out A(\omega)_GW...  ")
         with open("spftot_gw.dat",'w') as f:
              writer = csv.writer(f, delimiter = '\t')
