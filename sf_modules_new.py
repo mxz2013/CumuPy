@@ -536,7 +536,7 @@ def calc_eqp_imeqp(nspin,spf_qp, wtk,bdrange, kptrange,bdgw_min, en,enmin, enmax
     print("QP spectra calculation done!")
     return eqp, imeqp
 
-def calc_toc11_new (gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
+def calc_toc11_new(gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
                     eqp, Elda, scgw, Eplasmon, ims, invar_den,
                     invar_eta, wtk, metal_valence,nkpt,nband):
     import numpy as np
@@ -563,6 +563,7 @@ def calc_toc11_new (gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en
     outfile = open(outname,'w')
     for ik in kptrange:
         ikeff = ik + 1
+        spf_sumb =  np.zeros((np.size(newen_toc))) 
         for ib in bdrange:
             ibeff = ib + bdgw_min
             print(" ik, ib:",ikeff, ibeff)
@@ -674,6 +675,7 @@ def calc_toc11_new (gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en
 
                 spfkb = interp_toc(interp_en)
                 toc_tot += spfkb
+                spf_sumb += spfkb
                 with open("TOC11-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat", 'w') as f:
                     writer = csv.writer(f, delimiter = '\t')
  		    writer.writerow(['# w-fermi','# spf_toc11'])
@@ -695,6 +697,10 @@ def calc_toc11_new (gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en
     
                 outfile.write("%14.5f" % (norm[ik,ib]))
         outfile.write("\n")
+        with open("TOC11-k"+str("%02d"%(ikeff))+".dat", 'w') as f:
+            writer = csv.writer(f, delimiter = '\t')
+            writer.writerow(['# w-fermi','# spf_toc11 sum on b'])
+            writer.writerows(zip (interp_en-gwfermi, spf_sumb/wtk[ik]))
     outfile.close()
     return interp_en-gwfermi, toc_tot
 
@@ -717,6 +723,7 @@ def calc_rc (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin
     outfile = open(outname,'w')
     for ik in kptrange:
         ikeff = ik + 1
+        spf_sumb =  np.zeros((np.size(newen_rc))) 
         for ib in bdrange:
             ibeff = ib + bdgw_min
             print(" ik, ib:",ikeff, ibeff)
@@ -822,6 +829,7 @@ def calc_rc (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin
              #     range)""",interp_en[0], interp_en[-1])
             spfkb = interp_toc(interp_en)
             rc_tot += spfkb
+            spf_sumb += spfkb
             with open ("spf_rc-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat",'w') as f:
                 writer = csv.writer(f, delimiter = '\t')
  		writer.writerow(['# w-fermi','# spf_rc'])
@@ -845,6 +853,10 @@ def calc_rc (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin
     
             outfile.write("%14.5f" % (norm[ik,ib]))
         outfile.write("\n")
+        with open ("spf_rc-k"+str("%02d"%(ikeff))+".dat",'w') as f:
+            writer = csv.writer(f, delimiter = '\t')
+            writer.writerow(['# w-fermi','# spf_rc sum over all bands'])
+            writer.writerows(zip(interp_en-gwfermi, spf_sumb/wtk[ik]))
     outfile.close()
     return interp_en-gwfermi, rc_tot
 
@@ -994,3 +1006,6 @@ def calc_rc_Josh (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,
         outfile.write("\n")
     outfile.close()
     return interp_en-gwfermi, rc_tot
+
+
+def calc_toc_Fabio(gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,

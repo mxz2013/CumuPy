@@ -28,6 +28,12 @@ if isfile("invar.in"):
         sigfilename = invar['sigmafile'];
     else:
         sigfilename = 'default_SIG';
+
+    if 'outname' in invar:  ## using wtk.dat or not 
+        outname = str(invar['outname']);
+    else:
+        outname = 'Spfunctions';
+
     if 'flag_wtk' in invar:  ## using wtk.dat or not 
         flag_wtk = int(invar['flag_wtk']);
     else:
@@ -238,7 +244,8 @@ kptrange = xrange(minkpt - 1, maxkpt*nspin)
 ### ===================================================== ###
 print(" # ------------------------------------------------ # ")
 # Here we move to a subdirectory to avoid flooding-up the current directory
-newdirname = "Spfunctions"
+newdirname = outname
+#newdirname = "Spfunctions"
 origdir = getcwd() # remember where we are
 newdir = join(origdir, newdirname) # Complete path of the new directory
 print(" Moving into output directory:\n ", newdir)
@@ -348,7 +355,7 @@ if flag_calc_toc11 == 1:
                                             metal_valence,nkpt,nband)
         
        # print(" ### Writing out A(\omega)_TOC11...  ")
-        outname = "spftot_toc11"+"_s"+str(sfac)+"_p"+str(pfac)+"_"+str(penergy)+"ev"+".dat"
+        outname = "spftot_toc11"+".dat"
         outfile = open(outname,'w')
         for i in xrange(len(en_toc11)):
             outfile.write("%8.4f %12.8e\n" % (en_toc11[i], toc11_tot[i]))
@@ -390,12 +397,12 @@ if flag_calc_crc == 1:
     
     #calc_crc(invar_eta,gwfermi, wtk, kptrange, bdrange, bdgw_min, omegampole, ampole, npoles,
     #                      beta_greater, en_toc96, toc96_tot, imeqp, eqp)
-    outname = "spftot_toc96"+"_s"+str(sfac)+"_p"+str(pfac)+"_"+str(penergy)+"ev"+".dat"
+    outname = "spftot_toc96"+".dat"
     outfile = open(outname,'w')
     for i in xrange(len(en_crc)):
         outfile.write("%8.4f %12.8e \n" % (en_crc[i], toc96tot[i]))
     outfile.close()
-    outname = "spftot_crc"+"_s"+str(sfac)+"_p"+str(pfac)+"_"+str(penergy)+"ev"+".dat"
+    outname = "spftot_crc"+".dat"
     outfile = open(outname,'w')
     for i in xrange(len(en_crc)):
         outfile.write("%8.4f %12.8e \n" % (en_crc[i], crc_tot[i]))
@@ -416,7 +423,7 @@ if flag_calc_rc == 1:
                     eqp, Elda, scgw, ims, invar_den, invar_eta, wtk,nkpt,nband) 
     print (" ### Writing out A(\omega)_rc...  ")
 
-    outname = "spftot_rc"+"_s"+str(sfac)+"_p"+str(pfac)+"_"+str(penergy)+"ev"+".dat"
+    outname = "spftot_rc"+".dat"
     outfile = open(outname,'w')
     for i in xrange(len(toten)):
         outfile.write("%8.4f %12.8e\n" % (toten[i], spftot[i]))
@@ -432,7 +439,7 @@ if rc_Josh == 1:
     toten, spftot = calc_rc_Josh (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
                     eqp, Elda, scgw, ims, invar_den, invar_eta, wtk, ehf) 
 
-    outname = "spftot_rc_Josh"+"_s"+str(sfac)+"_p"+str(pfac)+"_"+str(penergy)+"ev"+".dat"
+    outname = "spftot_rc_Josh"+".dat"
     outfile = open(outname,'w')
     for i in xrange(len(toten)):
         outfile.write("%8.4f %12.8e\n" % (toten[i], spftot[i]))
