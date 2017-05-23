@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function
-from sf_modules_new import *
+from sf_modules import *
+from outread_modules import *
 from sf_crc_modules import *
 import numpy as np;
 import matplotlib.pylab as plt;
@@ -34,10 +35,23 @@ if isfile("invar.in"):
     else:
         outname = 'Spfunctions';
 
-    if 'flag_wtk' in invar:  ## using wtk.dat or not 
-        flag_wtk = int(invar['flag_wtk']);
+    if 'rs_heg' in invar:  ## using wtk.dat or not 
+        rs = float(invar['rs_heg']);
+    else:
+        rs = 0;
+    if 'wtk' in invar:  ## using wtk.dat or not 
+        flag_wtk = int(invar['wtk']);
     else:
         flag_wtk = 1;
+    if 'core_rc' in invar:  ## using wtk.dat or not 
+        core = int(invar['core_rc']);
+    else:
+        core = 0;
+    if 'extrinsic' in invar:  ## using wtk.dat or not 
+        extrinsic = int(invar['extrinsic']);
+    else:
+        extrinsic = 0;
+
     if 'flag_pjt' in invar:  ## using wtk.dat or not 
         flag_pjt = int(invar['flag_pjt']);
     else:
@@ -221,6 +235,16 @@ else:
     pjt3 = np.zeros((nkpt,nband))
 
 en, res, ims = read_sigfile(sigfilename, nkpt, bdgw_min, bdgw_max)
+
+if extrinsic == 1:
+    print("SKYDEBUG extrinsic")
+    Rx, Ry = read_R(rs)
+else:
+    Rx,res, Ry = read_sigfile(sigfilename, nkpt, bdgw_min, bdgw_max) ##SKYDEBUG
+
+with open("R3.9313.dat", 'w') as f:
+    writer = csv.writer(f, delimiter = '\t')
+    writer.writerows(zip (Rx, Ry))
 
 bdrange = xrange(minband - bdgw_min, maxband - bdgw_min + 1)
 kptrange = xrange(minkpt - 1, maxkpt*nspin)
@@ -420,7 +444,9 @@ if flag_calc_rc == 1:
    # print ("Starting time (elaps, cpu): %10.6e %10.6e"% (elaps1, cpu1))
     #print (" ### Calculation of exponential A(\omega)_TOC96..  ")
     toten, spftot = calc_rc (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
-                    eqp, Elda, scgw, ims, invar_den, invar_eta, wtk,nkpt,nband) 
+                    eqp, Elda, scgw, ims, invar_den,
+                             invar_eta,wtk,nkpt,nband,Rx, Ry, extrinsic,
+                             core,Eplasmon) 
     print (" ### Writing out A(\omega)_rc...  ")
 
     outname = "spftot_rc"+".dat"
