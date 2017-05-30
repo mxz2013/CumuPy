@@ -1,6 +1,7 @@
 SIG     # sigmafile
 test   # outname
 1      # extrinsic
+1    # background
 3.9313  # rs_heg
 7    # Eplasmon
 1   # scgw

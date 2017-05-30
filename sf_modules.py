@@ -455,11 +455,9 @@ def calc_rc (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin
             newdx = invar_den  # must be chosen carefully so that 0 is
             # included in NewEn. invar_den can be 0.1*0.5^n, or 0.2. 
             NewEn_0 = np.arange(NewEn_min, NewEn_max, newdx)
-            
             NewEn = [x for x in NewEn_0 if abs(x) > 1e-6]
             print ("SKYDEBUG NewEn", NewEn_min, NewEn_max)
 
-            interpR = interp1d(Rx, Ry, kind = 'linear', axis=-1) # SKY RRRR
             NewEn = np.asarray(NewEn)
             NewEn_size = len(NewEn)
             if NewEn_size == len(NewEn_0):
@@ -470,6 +468,7 @@ def calc_rc (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin
             if extrinsic == 0:              # SKY RRRR
                 ShiftIms = interpims(ShiftEn)
             else: 
+                interpR = interp1d(Rx, Ry, kind = 'linear', axis=-1) # SKY RRRR
                 ShiftIms = interpims(ShiftEn)*interpR(NewEn)
 
             ShiftIms_0 = interpims(NewEn_0+Elda_kb)
@@ -512,13 +511,16 @@ def calc_rc (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin
             for w in w_list:
                 Area2 = s_go/(w-eqp_kb-s_freq-eta) 
                 c = np.trapz(Area2, dx = denfft)
-                #c = 0
-                #for i in range(fftsize-1):
-                #    Area2 = 0.5*denfft*(s_go[i]/(w-eqp_kb-s_freq[i]-eta)
-                #                + s_go[i+1]/(w-eqp_kb-s_freq[i+1]-eta))
-                #    c += Area2
                 cwIm = 1./np.pi*c.imag
-                gw_list.append(0.5*wtk[ik]/np.pi*cwIm)
+                #if bg == 1 and w < gwfermi:
+                #    Area2 = s_go/(w-eqp_kb-s_freq-eta)
+                #    alpha = 1  # in practice alpha and beta
+                #    beta = 1
+                #    # should be determined by experimental spectrum
+                #    w_tmp = np.arange(w, gwfermi, denfft)
+                #    bwtaw = np.trapz(Area2, dx = denfft)
+                #    cwIm = 1./np.pi*(beta*bwtaw.imag + alpha*c.imag)
+                gw_list.append(0.5/np.pi*cwIm)
 
             print("IFFT done .....")
             interp_toc = interp1d(w_list, gw_list, kind='linear', axis=-1)
@@ -526,12 +528,14 @@ def calc_rc (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin
             #print("""the new energy range is (must be inside of above
              #     range)""",interp_en[0], interp_en[-1])
             spfkb = interp_toc(interp_en)
-            rc_tot += spfkb
+            rc_tot += spfkb*wtk[ik]
             spf_sumb += spfkb
             with open ("spf_rc-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat",'w') as f:
                 writer = csv.writer(f, delimiter = '\t')
  		writer.writerow(['# w-fermi','# spf_rc'])
-                writer.writerows(zip(interp_en-gwfermi, spfkb/wtk[ik]))
+                writer.writerows(zip(interp_en-gwfermi, spfkb))
+            
+            #and beta should be determined by the experimental spctrum.
             #spfkb = gw_list
             #toc_tot = [sum(i) for i in zip(toc_tot,gw_list)]
             #outnamekb = "spf_rc-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat"
@@ -541,7 +545,7 @@ def calc_rc (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin
             #    en_toc11.append(interp_en[i])
             #    outfilekb.write("%8.4f %12.8e \n" % (interp_en[i],spfkb[i])) 
             #outfilekb.close()
-            norm[ik,ib] = np.trapz(spfkb,interp_en)/(wtk[ik])
+            norm[ik,ib] = np.trapz(spfkb,interp_en)
             print("check the renormalization : :")
             print()
             print("the normalization of the spectral function is",norm[ik,ib])
@@ -554,7 +558,7 @@ def calc_rc (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin
         with open ("spf_rc-k"+str("%02d"%(ikeff))+".dat",'w') as f:
             writer = csv.writer(f, delimiter = '\t')
             writer.writerow(['# w-fermi','# spf_rc sum over all bands'])
-            writer.writerows(zip(interp_en-gwfermi, spf_sumb/wtk[ik]))
+            writer.writerows(zip(interp_en-gwfermi, spf_sumb))
     outfile.close()
     return interp_en-gwfermi, rc_tot
 

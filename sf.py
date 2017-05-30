@@ -51,6 +51,10 @@ if isfile("invar.in"):
         extrinsic = int(invar['extrinsic']);
     else:
         extrinsic = 0;
+    if 'background' in invar:  ## using wtk.dat or not 
+        bg = int(invar['background']);
+    else:
+        bg = 0;
 
     if 'flag_pjt' in invar:  ## using wtk.dat or not 
         flag_pjt = int(invar['flag_pjt']);
@@ -240,7 +244,9 @@ if extrinsic == 1:
     print("SKYDEBUG extrinsic")
     Rx, Ry = read_R(rs)
 else:
-    Rx,res, Ry = read_sigfile(sigfilename, nkpt, bdgw_min, bdgw_max) ##SKYDEBUG
+    Rx = 1
+    Ry = 1
+    #Rx,res, Ry = read_sigfile(sigfilename, nkpt, bdgw_min, bdgw_max) ##SKYDEBUG
 
 with open("R3.9313.dat", 'w') as f:
     writer = csv.writer(f, delimiter = '\t')
@@ -261,6 +267,61 @@ kptrange = xrange(minkpt - 1, maxkpt*nspin)
 #if not isdir(newdir) :
 #    mkdir(newdir)
 
+def gbroaden(x,f,sigma):
+	x = np.asarray(x)
+	f = np.asarray(f)
+	xsize = np.size(x)
+	broadf = np.zeros(f.size)
+	print("gbroaden() called, x.size:", x.size)
+	#dx =  x[1] - x[0] 
+        dx =  ( x[-1] - x[0] ) / float(xsize - 1)
+	print("gbroaden() called, gaussian window size (4 x sigma):", 4*sigma)
+	for n in xrange(xsize):
+		if  abs( x[n] - x[0] ) > 4*sigma : 
+			nrange = n
+			print("gbroaden() called, gaussian window size (4 x sigma) in x units (e.g. eV?):", x[nrange] - x[0])
+			break
+	if 4*sigma < dx*xsize/2 :
+		# First chunk (beginning)
+		for n in xrange(0,nrange):
+#	#		print "Processing... "+str(int(n/xsize)*100)+"\r",
+			for m in xrange(n-nrange,n+nrange):
+#	#			gaub = np.exp( - ( x[n] - x[m] )**2 / 2 / sigma**2 ) / np.sqrt(2*np.pi) / sigma
+				gaub = dx * np.exp( - ( dx * ( m - n ) )**2 / 2 / sigma**2 ) / np.sqrt(2*np.pi) / sigma
+				if m >= 0 : 
+					broadf[n] += f[m] * gaub
+				else : 
+					broadf[n] += f[0] * gaub
+		# Last chunk (end)
+		for n in xrange(xsize-nrange,xsize):
+#	#		print "Processing... "+str(int(nrange+n/xsize)*100)+"\r",
+			for m in xrange(n-nrange,n+nrange):
+#	#			gaub = np.exp( - ( x[n] - x[m] )**2 / 2 / sigma**2 ) / np.sqrt(2*np.pi) / sigma
+				gaub = dx * np.exp( - ( dx * ( m - n ) )**2 / 2 / sigma**2 ) / np.sqrt(2*np.pi) / sigma
+				if m < xsize : 
+					broadf[n] += f[m] * gaub
+				else : 
+					broadf[n] += f[-1] * gaub
+		# Middle chunk (treated with the standard formula)
+		for n in xrange(nrange,xsize-nrange):
+#	#		print "Processing... "+str(int(n/xsize)*100)+"\r",
+			for m in xrange(n-nrange,n+nrange):
+				gaub = dx * np.exp( - ( dx * ( m - n ) )**2 / 2 / sigma**2 ) / np.sqrt(2*np.pi) / sigma
+				#gaub = dx * np.exp( - ( x[n] - x[m] )**2 / 2 / sigma**2 ) / np.sqrt(2*np.pi) / sigma
+				broadf[n] += f[m] * gaub
+	else :
+		# Standard formula regardless of boundaries (it should work decently in all cases)
+		for n in xrange(xsize):
+#	#		print "Processing... "+str(int(n/xsize)*100)+"\r",
+			for m in xrange(xsize):
+				gaub = dx * np.exp( - ( dx * ( m - n ) )**2 / 2 / sigma**2 ) / np.sqrt(2*np.pi) / sigma
+				#gaub = dx * np.exp( - ( x[n] - x[m] )**2 / 2 / sigma**2 ) / np.sqrt(2*np.pi) / sigma
+				broadf[n] += f[m] * gaub
+#	af = np.trapz(f)
+#	abf = np.trapz(broadf)
+#	print af, abf
+#	broadf = broadf * af / abf
+	return broadf
 
 #print ("Moving back to parent directory:\n", origdir)
 #chdir(newdir)
@@ -437,12 +498,6 @@ if flag_calc_crc == 1:
 if flag_calc_rc == 1:
     print("# ------------------------------------------------ #")
     print ("Calculating RC begins")
-   # e0=time.time()
-   # c0=time.clock()
-   # elaps1=time.time() - e0
-   # cpu1=time.clock() - c0
-   # print ("Starting time (elaps, cpu): %10.6e %10.6e"% (elaps1, cpu1))
-    #print (" ### Calculation of exponential A(\omega)_TOC96..  ")
     toten, spftot = calc_rc (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
                     eqp, Elda, scgw, ims, invar_den,
                              invar_eta,wtk,nkpt,nband,Rx, Ry, extrinsic,
@@ -456,10 +511,38 @@ if flag_calc_rc == 1:
     outfile.close()
     print (" A(\omega)_rc written in", outname)
     plt.plot(toten,spftot,label="ftot_rc");
-   # elaps2 = time.time() - elaps1 - e0
-    #cpu2 = time.clock() - cpu1 - c0
-    #print(" Used time (elaps, cpu): %10.6e %10.6e"% (elaps2, cpu2))
-    print (" ### Writing out A(\omega)_rc.")
+    
+    if extrinsic == 1 and bg == 1:
+        spftot_brd =  gbroaden(toten,spftot,0.3) 
+        with open("spftot_rc_brd.dat", 'w') as f:
+            writer = csv.writer(f, delimiter = '\t')
+            writer.writerows(zip (toten, spftot_brd))
+        interptot = interp1d(toten, spftot_brd, kind = 'linear', axis = -1)
+        spfbg = []
+        enqp_exp = -0.609       # all of these should
+        spfqp_exp = 4.833522   # be read from input
+        en0_exp = -17.671968   # or a file of exp
+        spf0_exp = 2.1747096   # spectrum data
+        beta = spf0_exp * 1./ np.trapz(spftot_brd[(toten>=
+                            en0_exp)&(toten<=0)],toten[(toten>=en0_exp)&(toten<=0)])
+        alpha = 1./interptot(enqp_exp)*abs(spfqp_exp - beta * np.trapz(spftot_brd[(toten>=enqp_exp)&
+                                                   (toten<=0)],toten[(toten>=enqp_exp)&(toten<=0)])) 
+        for w in toten:
+            if w < 0:
+                spf_tmp = np.trapz(spftot_brd[(toten>=w)&
+                                          (toten<=0)],toten[(toten>=w)&(toten<=0)])
+            else:
+                spf_tmp = 0
+            spf = alpha*interptot(w) + beta*spf_tmp 
+            spfbg.append(spf)
+
+        with open("spftot_rc_full.dat", 'w') as f:
+            writer = csv.writer(f, delimiter = '\t')
+            writer.writerows(zip (toten, spfbg))
+    
+        plt.plot(toten,spfbg,label="ftot_rc_ext_bg");
+
+
 if rc_Josh == 1:
 
     toten, spftot = calc_rc_Josh (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
