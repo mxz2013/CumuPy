@@ -43,7 +43,7 @@ if isfile("invar.in"):
         flag_wtk = int(invar['wtk']);
     else:
         flag_wtk = 1;
-    if 'core_rc' in invar:  ## using wtk.dat or not 
+    if 'core_rc' in invar:  ##  
         core = int(invar['core_rc']);
     else:
         core = 0;
@@ -176,8 +176,11 @@ if isfile("invar.in"):
     if 'invar_eta' in invar: #lorentzian broadening of all cumulant A(\omega)
         invar_eta = float(invar['invar_eta'])
     else:
-        invar_eta = 0.2
-        
+        invar_eta = 0.1
+    if 'Gaussian' in invar: #lorentzian broadening of all cumulant A(\omega)
+        gbro = float(invar['Gaussian'])
+    else:
+        gbro = 0.01
     if 'npoles' in invar: #lorentzian broadening of all cumulant A(\omega)
         npoles = int(invar['npoles'])
     else:
@@ -241,16 +244,15 @@ else:
 en, res, ims = read_sigfile(sigfilename, nkpt, bdgw_min, bdgw_max)
 
 if extrinsic == 1:
-    print("SKYDEBUG extrinsic")
     Rx, Ry = read_R(rs)
 else:
     Rx = 1
     Ry = 1
     #Rx,res, Ry = read_sigfile(sigfilename, nkpt, bdgw_min, bdgw_max) ##SKYDEBUG
 
-with open("R3.9313.dat", 'w') as f:
-    writer = csv.writer(f, delimiter = '\t')
-    writer.writerows(zip (Rx, Ry))
+#with open("R3.9313.dat", 'w') as f:
+#    writer = csv.writer(f, delimiter = '\t')
+#    writer.writerows(zip (Rx, Ry))
 
 bdrange = xrange(minband - bdgw_min, maxband - bdgw_min + 1)
 kptrange = xrange(minkpt - 1, maxkpt*nspin)
@@ -511,12 +513,15 @@ if flag_calc_rc == 1:
     outfile.close()
     print (" A(\omega)_rc written in", outname)
     plt.plot(toten,spftot,label="ftot_rc");
+
+    spftot_brd =  gbroaden(toten,spftot, gbro) 
+
+    with open("spftot_rc_gbro-"+str(gbro)+".dat", 'w') as f:
+        writer = csv.writer(f, delimiter = '\t')
+        writer.writerows(zip (toten, spftot_brd))
     
     if extrinsic == 1 and bg == 1:
-        spftot_brd =  gbroaden(toten,spftot,0.3) 
-        with open("spftot_rc_brd.dat", 'w') as f:
-            writer = csv.writer(f, delimiter = '\t')
-            writer.writerows(zip (toten, spftot_brd))
+
         interptot = interp1d(toten, spftot_brd, kind = 'linear', axis = -1)
         spfbg = []
         enqp_exp = -0.609       # all of these should
@@ -529,11 +534,10 @@ if flag_calc_rc == 1:
                                                    (toten<=0)],toten[(toten>=enqp_exp)&(toten<=0)])) 
         for w in toten:
             if w < 0:
-                spf_tmp = np.trapz(spftot_brd[(toten>=w)&
-                                          (toten<=0)],toten[(toten>=w)&(toten<=0)])
+                spf_tmp = np.trapz(spftot_brd[(toten>=w)&(toten<=0)],toten[(toten>=w)&(toten<=0)])
             else:
                 spf_tmp = 0
-            spf = alpha*interptot(w) + beta*spf_tmp 
+            spf = alpha*interptot(w) + beta*spf_tmp
             spfbg.append(spf)
 
         with open("spftot_rc_full.dat", 'w') as f:
