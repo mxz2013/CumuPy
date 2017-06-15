@@ -439,10 +439,11 @@ if flag_calc_toc11 == 1:
         en_toc11, toc11_tot = calc_toc11_new(gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax, 
                                          eqp, Elda,scgw, Eplasmon, ims,
                                             invar_den, invar_eta, wtk,
-                                            metal_valence,nkpt,nband)
+                                            metal_valence,nkpt,nband, Rx, Ry,
+                                             extrinsic)
         
        # print(" ### Writing out A(\omega)_TOC11...  ")
-        outname = "spftot_toc11"+".dat"
+        outname = "spftot_toc11"+"-ext"+str(extrinsic)+".dat"
         outfile = open(outname,'w')
         for i in xrange(len(en_toc11)):
             outfile.write("%8.4f %12.8e\n" % (en_toc11[i], toc11_tot[i]))
@@ -450,25 +451,12 @@ if flag_calc_toc11 == 1:
         print(" A(\omega)_TOC11 written in", outname)
         plt.plot(en_toc11,toc11_tot,label="ftot_toc11");
         print (" ### Writing out A(\omega)_TOC11..")
+        spftot_brd =  gbroaden(en_toc11, toc11_tot, gbro) 
+
+        with open("spftot_toc11_gbro-"+str(gbro)+".dat", 'w') as f:
+            writer = csv.writer(f, delimiter = '\t')
+            writer.writerows(zip ( en_toc11, spftot_brd))
         
-#if flag_calc_toc96 ==1:       
-#    print("# ------------------------------------------------ #")
-#    print("Calulating toc96 begins::")
-#    
-#    en_toc96, toc96_tot, beta_greater = calc_toc96(gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax, 
-#                                         eqp, Elda,scgw, Eplasmon, ims,
-#                                            invar_den, invar_eta, wtk,
-#                                            metal_valence, imeqp,nkpt, nband)
-#
-#    #print(" ### Writing out A(\omega)_TOC96 and CRC...  ")
-#    outname = "spftot_toc96"+"_s"+str(sfac)+"_p"+str(pfac)+"_"+str(penergy)+"ev"+".dat"
-#    outfile = open(outname,'w')
-#    for i in xrange(len(en_toc96)):
-#        outfile.write("%8.4f %12.8e \n" % (en_toc96[i], toc96_tot[i]))
-#    outfile.close()
-#    print(" A(\omega)_TOC96 and CRC written in", outname)
-#    plt.plot(en_toc96,toc96_tot,label="ftot_toc96");
-#    print (" ### Writing out A(\omega)_TOC11..")
     
 if flag_calc_crc == 1:
     print("# ------------------------------------------------ #")
@@ -506,7 +494,7 @@ if flag_calc_rc == 1:
                              core,Eplasmon) 
     print (" ### Writing out A(\omega)_rc...  ")
 
-    outname = "spftot_rc"+".dat"
+    outname = "spftot_rc"+"-ext"+str(extrinsic)+".dat"
     outfile = open(outname,'w')
     for i in xrange(len(toten)):
         outfile.write("%8.4f %12.8e\n" % (toten[i], spftot[i]))

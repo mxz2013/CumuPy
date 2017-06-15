@@ -226,7 +226,7 @@ def calc_eqp_imeqp(nspin,spf_qp, wtk,bdrange, kptrange,bdgw_min, en,enmin, enmax
 
 def calc_toc11_new(gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
                     eqp, Elda, scgw, Eplasmon, ims, invar_den,
-                    invar_eta, wtk, metal_valence,nkpt,nband):
+                    invar_eta, wtk, metal_valence,nkpt,nband,Rx, Ry, extrinsic):
     import numpy as np
     import pyfftw
     from numpy.fft import fftshift,fftfreq
@@ -320,6 +320,11 @@ def calc_toc11_new(gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,
                     writer = csv.writer(f, delimiter = '\t')
  		    writer.writerow(['# w','# ImSigma(w-eqp)'])
                     writer.writerows(zip (NewEn_0, ShiftIms_0))
+                if extrinsic == 0:              # SKY RRRR
+                    ShiftIms = interpims(ShiftEn)
+                else: 
+                    interpR = interp1d(Rx, Ry, kind = 'linear', axis=-1) # SKY RRRR
+                    ShiftIms = interpims(ShiftEn)*interpR(NewEn)
                 for t in trange:
                     tImag = t*1.j 
                     area_tmp1 = 1.0/np.pi*abs(ShiftIms)*(np.exp(-(NewEn)*tImag)-1.0)*(1.0/((NewEn)**2))
@@ -364,9 +369,9 @@ def calc_toc11_new(gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,
                 spfkb = interp_toc(interp_en)
                 toc_tot += spfkb
                 spf_sumb += spfkb
-                with open("TOC11-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat", 'w') as f:
+                with open("TOC11-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+"-ext"+str(extrinsic)+".dat", 'w') as f:
                     writer = csv.writer(f, delimiter = '\t')
- 		    writer.writerow(['# w-fermi','# spf_toc11'])
+                    writer.writerow(['# w-fermi','# spf_toc11'])
                     writer.writerows(zip (interp_en-gwfermi, spfkb/wtk[ik]))
                 #outnamekb = "TOC11-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat"
                 #outfilekb = open(outnamekb,'w')
@@ -482,7 +487,7 @@ def calc_rc (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin
             with open("ShiftIms_rc-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat",
                                   'w') as f:
                 writer = csv.writer(f, delimiter = '\t')
- 		writer.writerow(['# w','# ImSigma(w-eqp)'])
+                writer.writerow(['# w','# ImSigma(w-eqp)'])
                 writer.writerows(zip (NewEn, ShiftIms))
 
             denfft = 2*np.pi/abs(trange[-1]-trange[0])
@@ -530,9 +535,9 @@ def calc_rc (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin
             spfkb = interp_toc(interp_en)
             rc_tot += spfkb*wtk[ik]
             spf_sumb += spfkb
-            with open ("spf_rc-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat",'w') as f:
+            with open ("spf_rc-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+"-ext"+str(extrinsic)+".dat",'w') as f:
                 writer = csv.writer(f, delimiter = '\t')
- 		writer.writerow(['# w-fermi','# spf_rc'])
+                writer.writerow(['# w-fermi','# spf_rc'])
                 writer.writerows(zip(interp_en-gwfermi, spfkb))
             
             #and beta should be determined by the experimental spctrum.
@@ -803,7 +808,7 @@ def calc_toc_Fabio(gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,
                 #    writer.writerows(zip (NewEn, ShiftIms))
                 with open("ShiftIms_toc-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat", 'w') as f:
                     writer = csv.writer(f, delimiter = '\t')
- 		    writer.writerow(['# w','# ImSigma(w-eqp)'])
+                    writer.writerow(['# w','# ImSigma(w-eqp)'])
                     writer.writerows(zip (NewEn_0, ShiftIms_0))
                 for t in trange:
                     tImag = t*1.j 
@@ -851,7 +856,7 @@ def calc_toc_Fabio(gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,
                 spf_sumb += spfkb
                 with open("TOC11-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat", 'w') as f:
                     writer = csv.writer(f, delimiter = '\t')
- 		    writer.writerow(['# w-fermi','# spf_toc11'])
+                    writer.writerow(['# w-fermi','# spf_toc11'])
                     writer.writerows(zip (interp_en-gwfermi, spfkb/wtk[ik]))
                 #outnamekb = "TOC11-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat"
                 #outfilekb = open(outnamekb,'w')
