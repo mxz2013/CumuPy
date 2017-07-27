@@ -16,7 +16,7 @@ import sys
 from os.path import isfile, join, isdir
 from os import getcwd, pardir, mkdir, chdir
 
-def calc_spf_gw(pjt1,pjt2,pjt3,bdrange, kptrange, bdgw_min, wtk, en, enmin, enmax, res,
+def calc_spf_gw(cs1,cs2,cs3,pjt1,pjt2,pjt3,bdrange, kptrange, bdgw_min, wtk, en, enmin, enmax, res,
                 ims, hartree, gwfermi, invar_eta):
     import numpy as np;
     import csv
@@ -40,6 +40,12 @@ def calc_spf_gw(pjt1,pjt2,pjt3,bdrange, kptrange, bdgw_min, wtk, en, enmin, enma
     # for each band and k point
     for ik in kptrange:
         ikeff = ik + 1
+        spf_sumb =  np.zeros((np.size(newen))) 
+        spf_sumb1 =  np.zeros((np.size(newen))) 
+        spf_sumb2 =  np.zeros((np.size(newen))) 
+        spf_sumb3 =  np.zeros((np.size(newen))) 
+        spftot_sumbp = np.zeros((np.size(newen)))  # sum over bands, projections,
+                                                # k-resolved
         for ib in bdrange:
             ibeff = ib + bdgw_min
             interpres = interp1d(en, res[ik,ib], kind = 'linear', axis = -1)
@@ -50,15 +56,23 @@ def calc_spf_gw(pjt1,pjt2,pjt3,bdrange, kptrange, bdgw_min, wtk, en, enmin, enma
             redenom = newen - hartree[ik,ib] - interpres(newen)
             tmpim = interpims(newen)
             spfkb =  abs(tmpim)/np.pi/(redenom**2 + tmpim**2)
-            spfkb_pjt1 = spfkb*pjt1[ik,ib] 
-            spfkb_pjt2 = spfkb*pjt2[ik,ib] 
-            spfkb_pjt3 = spfkb*pjt3[ik,ib] 
+            spfkb_pjt1 = spfkb*pjt1[ik,ib]*cs1#*wtk[ik] 
+            spfkb_pjt2 = spfkb*pjt2[ik,ib]*cs2#*wtk[ik]
+            spfkb_pjt3 = spfkb*pjt3[ik,ib]*cs3#*wtk[ik]
 
             spftot += spfkb*wtk[ik]
-            spftot_pjt1 += spfkb*wtk[ik]*pjt1[ik,ib]
-            spftot_pjt2 += spfkb*wtk[ik]*pjt2[ik,ib]
-            spftot_pjt3 += spfkb*wtk[ik]*pjt3[ik,ib]
-            
+
+            spf_sumb += spfkb*wtk[ik]
+
+            spf_sumb1 += spfkb*wtk[ik]*pjt1[ik,ib]*cs1 
+            spf_sumb2 += spfkb*wtk[ik]*pjt2[ik,ib]*cs2
+            spf_sumb3 += spfkb*wtk[ik]*pjt3[ik,ib]*cs3
+
+           # spftot_sumbp += spf_sumb1+spf_sumb2+spf_sumb3
+
+            spftot_pjt1 += spfkb*wtk[ik]*pjt1[ik,ib]*cs1
+            spftot_pjt2 += spfkb*wtk[ik]*pjt2[ik,ib]*cs2
+            spftot_pjt3 += spfkb*wtk[ik]*pjt3[ik,ib]*cs3
             with open("spf_gw-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat",
                  'w') as f:
                 writer = csv.writer(f, delimiter = '\t')
@@ -71,6 +85,12 @@ def calc_spf_gw(pjt1,pjt2,pjt3,bdrange, kptrange, bdgw_min, wtk, en, enmin, enma
             #    newen[ien] = newen[ien] - efermi
             #    outfilekb.write("%8.4f %12.8e %12.8e %12.8e %12.8e\n" % (newen[ien], spfkb[ien], redenom[ien], tmpres[ien], tmpim[ien]))
             #outfilekb.close()
+        spftot_sumbp = spf_sumb1+spf_sumb2+spf_sumb3
+        with open("spf_gw-k"+str("%02d"%(ikeff))+".dat", 'w') as f:
+            writer = csv.writer(f, delimiter = '\t')
+            writer.writerow(['# w-fermi','# sum on b','pjts','pjtp','pjtd',
+                             'sum over b and pjt'])
+            writer.writerows(zip(newen-gwfermi,spf_sumb,spf_sumb1,spf_sumb2,spf_sumb3,spftot_sumbp))
     return newen-gwfermi, spftot, spftot_pjt1, spftot_pjt2, spftot_pjt3
 
 
@@ -144,7 +164,6 @@ def calc_eqp_imeqp(nspin,spf_qp, wtk,bdrange, kptrange,bdgw_min, en,enmin, enmax
     qpspftot = np.zeros((np.size(newen)))
     qpspftot_up = np.zeros((np.size(newen)))
     qpspftot_down = np.zeros((np.size(newen)))
-
     #for ik in kptrange:
     #    for ib in bdrange:
     for ik in xrange(nkpt):
@@ -226,7 +245,8 @@ def calc_eqp_imeqp(nspin,spf_qp, wtk,bdrange, kptrange,bdgw_min, en,enmin, enmax
 
 def calc_toc11_new(gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
                     eqp, Elda, scgw, Eplasmon, ims, invar_den,
-                    invar_eta, wtk, metal_valence,nkpt,nband,Rx, Ry, extrinsic):
+                    invar_eta, wtk, metal_valence,nkpt,nband,Rx, Ry,
+                   extrinsic,pjt1,pjt2,pjt3,cs1,cs2,cs3):
     import numpy as np
     import pyfftw
     from numpy.fft import fftshift,fftfreq
@@ -243,7 +263,9 @@ def calc_toc11_new(gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,
     ddinter = 0.005 
     newen_toc = np.arange(enmin, enmax, ddinter)
     toc_tot =  np.zeros((np.size(newen_toc))) 
-    #pdos = np.array(pdos)
+    spftot_pjt1 = np.zeros((np.size(newen_toc)));
+    spftot_pjt2 = np.zeros((np.size(newen_toc)));
+    spftot_pjt3 = np.zeros((np.size(newen_toc)));
     tol_fermi = 1e-3
     fftsize = FFTtsize
     norm = np.zeros((nkpt,nband))
@@ -252,6 +274,10 @@ def calc_toc11_new(gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,
     for ik in kptrange:
         ikeff = ik + 1
         spf_sumb =  np.zeros((np.size(newen_toc))) 
+        spf_sumb_pjt1 =  np.zeros((np.size(newen_toc))) 
+        spf_sumb_pjt2 =  np.zeros((np.size(newen_toc))) 
+        spf_sumb_pjt3 =  np.zeros((np.size(newen_toc))) 
+        spf_sumbp = np.zeros((np.size(newen_toc))) 
         for ib in bdrange:
             ibeff = ib + bdgw_min
             print(" ik, ib:",ikeff, ibeff)
@@ -325,6 +351,8 @@ def calc_toc11_new(gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,
                 else: 
                     interpR = interp1d(Rx, Ry, kind = 'linear', axis=-1) # SKY RRRR
                     ShiftIms = interpims(ShiftEn)*interpR(NewEn)
+                    #interp_SIms = interp1d(NewEn, ShiftIms, kind = 'cubic', axis=-1) # SKY RRRR
+                    #ShiftIms = interp_SIms(NewEn)
                 for t in trange:
                     tImag = t*1.j 
                     area_tmp1 = 1.0/np.pi*abs(ShiftIms)*(np.exp(-(NewEn)*tImag)-1.0)*(1.0/((NewEn)**2))
@@ -360,19 +388,32 @@ def calc_toc11_new(gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,
                     Area2 = s_go/(w-eqp_kb-s_freq-eta) 
                     c = np.trapz(Area2, dx = denfft)
                     cwIm = 1./np.pi*c.imag
-                    gw_list.append(0.5*wtk[ik]/np.pi*cwIm)
+                    gw_list.append(0.5/np.pi*cwIm)
 
                 print("IFFT done .....")
                 interp_toc = interp1d(w_list, gw_list, kind='linear', axis=-1)
                 interp_en = newen_toc
 
                 spfkb = interp_toc(interp_en)
-                toc_tot += spfkb
-                spf_sumb += spfkb
+                spfkb_pjt1 = spfkb*pjt1[ik,ib]*cs1 
+                spfkb_pjt2 = spfkb*pjt2[ik,ib]*cs2 
+                spfkb_pjt3 = spfkb*pjt3[ik,ib]*cs3 
+                toc_tot += spfkb*wtk[ik]
+                spftot_pjt1 += spfkb*pjt1[ik,ib]*wtk[ik]*cs1
+                spftot_pjt2 += spfkb*pjt2[ik,ib]*wtk[ik]*cs2
+                spftot_pjt3 += spfkb*pjt3[ik,ib]*wtk[ik]*cs3
+                spf_sumb += spfkb*wtk[ik]
+                spf_sumb_pjt1 += spfkb*wtk[ik]*pjt1[ik,ib]*cs1
+                spf_sumb_pjt2 += spfkb*wtk[ik]*pjt2[ik,ib]*cs2
+                spf_sumb_pjt3 += spfkb*wtk[ik]*pjt3[ik,ib]*cs3
+
                 with open("TOC11-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+"-ext"+str(extrinsic)+".dat", 'w') as f:
                     writer = csv.writer(f, delimiter = '\t')
-                    writer.writerow(['# w-fermi','# spf_toc11'])
-                    writer.writerows(zip (interp_en-gwfermi, spfkb/wtk[ik]))
+                    writer.writerow(['# w-fermi','# spf_toc11',
+                                     'spf_toc11_pjts',
+                                     'spf_toc11_pjtp','spf_toc11_pjtd'])
+                    writer.writerows(zip (interp_en-gwfermi,
+                                          spfkb,spfkb_pjt1,spfkb_pjt2,spfkb_pjt3 ))
                 #outnamekb = "TOC11-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat"
                 #outfilekb = open(outnamekb,'w')
                 #en_toc11 = []
@@ -380,7 +421,7 @@ def calc_toc11_new(gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,
                 #    en_toc11.append(interp_en[i])
                 #    outfilekb.write("%8.4f %12.8e \n" % (interp_en[i],spfkb[i])) 
                 #outfilekb.close()
-                norm[ik,ib] = np.trapz(spfkb,interp_en)/(wtk[ik])
+                norm[ik,ib] = np.trapz(spfkb,interp_en)
                 print("check the renormalization : :")
                 print()
                 print("the normalization of the spectral function is",norm[ik,ib])
@@ -390,12 +431,15 @@ def calc_toc11_new(gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,
     
                 outfile.write("%14.5f" % (norm[ik,ib]))
         outfile.write("\n")
+        spf_sumbp = spf_sumb_pjt1+spf_sumb_pjt2+spf_sumb_pjt3
         with open("TOC11-k"+str("%02d"%(ikeff))+".dat", 'w') as f:
             writer = csv.writer(f, delimiter = '\t')
-            writer.writerow(['# w-fermi','# spf_toc11 sum on b'])
-            writer.writerows(zip (interp_en-gwfermi, spf_sumb/wtk[ik]))
+            writer.writerow(['# w-fermi','# spf_toc11 sum on b','# pjts',
+                             '# pjtp','# pjtd', 'sum b and projections'])
+            writer.writerows(zip (interp_en-gwfermi, spf_sumb, spf_sumb_pjt1,
+                                  spf_sumb_pjt2,spf_sumb_pjt3, spf_sumbp))
     outfile.close()
-    return interp_en-gwfermi, toc_tot
+    return interp_en-gwfermi, toc_tot,spftot_pjt1, spftot_pjt2, spftot_pjt3
 
 def calc_rc (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
                     eqp, Elda, scgw, ims, invar_den, invar_eta, wtk,nkpt,nband,
@@ -461,12 +505,12 @@ def calc_rc (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin
             # included in NewEn. invar_den can be 0.1*0.5^n, or 0.2. 
             NewEn_0 = np.arange(NewEn_min, NewEn_max, newdx)
             NewEn = [x for x in NewEn_0 if abs(x) > 1e-6]
-            print ("SKYDEBUG NewEn", NewEn_min, NewEn_max)
+            #print ("SKYDEBUG NewEn", NewEn_min, NewEn_max)
 
             NewEn = np.asarray(NewEn)
             NewEn_size = len(NewEn)
             if NewEn_size == len(NewEn_0):
-                print("""invar_den should  be 0.1*0.5*n where n is
+                print("""ERROE:invar_den should  be 0.1*0.5*n where n is
                       integer number!!!""")
                 sys.exit(0)
             ShiftEn = NewEn + Elda_kb #np.arange(NewEn_min + Elda_kb, NewEn_max
@@ -475,6 +519,12 @@ def calc_rc (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin
             else: 
                 interpR = interp1d(Rx, Ry, kind = 'linear', axis=-1) # SKY RRRR
                 ShiftIms = interpims(ShiftEn)*interpR(NewEn)
+                #interp_SIms = interp1d(NewEn, ShiftIms, kind = 'cubic', axis=-1) # SKY RRRR
+                #ShiftIms = interp_SIms(NewEn)
+
+                #with open("ShiftIms.dat",'w') as f:
+                #    writer = csv.writer(f, delimiter = '\t')
+                #    writer.writerows(zip (NewEn,ShiftIms) )
 
             ShiftIms_0 = interpims(NewEn_0+Elda_kb)
             gt_list = []

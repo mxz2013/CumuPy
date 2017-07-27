@@ -47,7 +47,7 @@ if isfile("invar.in"):
         core = int(invar['core_rc']);
     else:
         core = 0;
-    if 'extrinsic' in invar:  ## using wtk.dat or not 
+    if 'extrinsic' in invar:  ## calculate extrinsic spf 
         extrinsic = int(invar['extrinsic']);
     else:
         extrinsic = 0;
@@ -56,10 +56,14 @@ if isfile("invar.in"):
     else:
         bg = 0;
 
-    if 'flag_pjt' in invar:  ## using wtk.dat or not 
-        flag_pjt = int(invar['flag_pjt']);
+    if 'pjt' in invar:  ## projections 
+        flag_pjt = int(invar['pjt']);
     else:
         flag_pjt = 0;
+    if 'Ephoton' in invar:  ## photon-energy 
+        Ephoton = float(invar['Ephoton']);
+    else:
+        Ephoton = 0.0;
     if 'scgw' in invar:  #one-shot G0W0 or scGW self-energy
         scgw = int(invar['scgw']); 
     else:
@@ -233,6 +237,7 @@ else:
     wtk = [1]*nkpt
 if flag_pjt == 1:
     pjt1, pjt2, pjt3 =read_pjt_new(nkpt,nband,bdgw_min,nspin) #  read_pjt()
+    cs1, cs2, cs3 = read_cs(Ephoton)
 else:
     print("""
           WARNING:  no projections of s, p, or d!
@@ -240,7 +245,19 @@ else:
     pjt1 = np.zeros((nkpt,nband))
     pjt2 = np.zeros((nkpt,nband))
     pjt3 = np.zeros((nkpt,nband))
+    cs1 = 0
+    cs2 = 0
+    cs3 = 0
 
+with open("pjt1.dat", 'w') as f:
+    writer = csv.writer(f, delimiter = '\t')
+    writer.writerows(zip (pjt1))
+with open("pjt2.dat", 'w') as f:
+    writer = csv.writer(f, delimiter = '\t')
+    writer.writerows(zip (pjt2))
+with open("pjt3.dat", 'w') as f:
+    writer = csv.writer(f, delimiter = '\t')
+    writer.writerows(zip (pjt3))
 en, res, ims = read_sigfile(sigfilename, nkpt, bdgw_min, bdgw_max)
 
 if extrinsic == 1:
@@ -379,20 +396,19 @@ if flag_calc_gw == 1:
        # plt.plot( newen,spftot_down,label="ftot_gw_SpinDown")
 
     elif nspin == 1:
-        newen, spftot, spftot_pjt1, spftot_pjt2, spftot_pjt3 = calc_spf_gw(pjt1,pjt2,pjt3,bdrange, kptrange, bdgw_min, wtk, en, enmin, enmax, res, ims, hartree, gwfermi, invar_eta)
+        newen, spftot, spftot_pjt1, spftot_pjt2, spftot_pjt3 = calc_spf_gw(cs1,cs2,cs3,pjt1,pjt2,pjt3,bdrange, kptrange, bdgw_min, wtk, en, enmin, enmax, res, ims, hartree, gwfermi, invar_eta)
        # print(" ### Writing out A(\omega)_GW...  ")
         with open("spftot_gw.dat",'w') as f:
              writer = csv.writer(f, delimiter = '\t')
              writer.writerow(['# w-fermi','# spftot','# spftot_s','# spftot_p','# spftot_d'])
              writer.writerows(zip( newen, spftot, spftot_pjt1, spftot_pjt2, spftot_pjt3))
 
-        #outname = "spftot_gw"+"_s"+str(sfac)+"_p"+str(pfac)+"_"+str(penergy)+"ev"+".dat"
-        #outfile = open(outname,'w')
-        #for i in xrange(np.size(newen)):
-        #    outfile.write("%7.4f %15.10e\n"% (newen[i],spftot[i])) # Dump string representations of arrays
-        #outfile.close()
-        #print(" A(\omega)_GW written in", outname)
-        plt.plot(newen,spftot,label="ftot_gw");
+        spftot_brd =  gbroaden(newen,spftot, gbro) 
+        with open("spftot_gw_gbro-"+str(gbro)+".dat", 'w') as f:
+            writer = csv.writer(f, delimiter = '\t')
+            writer.writerows(zip (newen, spftot_brd))
+
+        plt.plot(newen,spftot_brd,label="ftot_gw_bro");
 
 if flag_calc_toc11 == 1:
     if nspin == 2: 
@@ -436,28 +452,28 @@ if flag_calc_toc11 == 1:
        # print (" ### Writing out A(\omega)_TOC11..")
     else:
         print( "Calculating TOC11 begins")
-        en_toc11, toc11_tot = calc_toc11_new(gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax, 
-                                         eqp, Elda,scgw, Eplasmon, ims,
+        en_toc11, toc11_tot, tot_s, tot_p,tot_d =calc_toc11_new(gwfermi,lda_fermi, bdrange, bdgw_min, kptrange,
+                       FFTtsize, en,enmin, enmax, eqp, Elda,scgw, Eplasmon, ims,
                                             invar_den, invar_eta, wtk,
                                             metal_valence,nkpt,nband, Rx, Ry,
-                                             extrinsic)
+                                             extrinsic,pjt1,pjt2,pjt3,cs1,cs2,cs3)
         
-       # print(" ### Writing out A(\omega)_TOC11...  ")
-        outname = "spftot_toc11"+"-ext"+str(extrinsic)+".dat"
-        outfile = open(outname,'w')
-        for i in xrange(len(en_toc11)):
-            outfile.write("%8.4f %12.8e\n" % (en_toc11[i], toc11_tot[i]))
-        outfile.close()
-        print(" A(\omega)_TOC11 written in", outname)
-        plt.plot(en_toc11,toc11_tot,label="ftot_toc11");
-        print (" ### Writing out A(\omega)_TOC11..")
+        with open("spftot_toc11"+"-ext"+str(extrinsic)+".dat",'w') as f:
+             writer = csv.writer(f, delimiter = '\t')
+             writer.writerow(['# w-fermi','# spftot','# spftot_s','# spftot_p','# spftot_d'])
+             writer.writerows(zip( en_toc11, toc11_tot, tot_s, tot_p,tot_d))
+        #outname = "spftot_toc11"+"-ext"+str(extrinsic)+".dat"
+        #outfile = open(outname,'w')
+        #for i in xrange(len(en_toc11)):
+        #    outfile.write("%8.4f %12.8e\n" % (en_toc11[i], toc11_tot[i]))
+        #outfile.close()
+        #print(" A(\omega)_TOC11 written in", outname)
+        #print (" ### Writing out A(\omega)_TOC11..")
         spftot_brd =  gbroaden(en_toc11, toc11_tot, gbro) 
-
         with open("spftot_toc11_gbro-"+str(gbro)+".dat", 'w') as f:
             writer = csv.writer(f, delimiter = '\t')
             writer.writerows(zip ( en_toc11, spftot_brd))
-        
-    
+        plt.plot(en_toc11,spftot_brd,label="ftot_toc11_brd");
 if flag_calc_crc == 1:
     print("# ------------------------------------------------ #")
     print("Calulating CRC begines::")
@@ -500,21 +516,20 @@ if flag_calc_rc == 1:
         outfile.write("%8.4f %12.8e\n" % (toten[i], spftot[i]))
     outfile.close()
     print (" A(\omega)_rc written in", outname)
-    plt.plot(toten,spftot,label="ftot_rc");
 
     spftot_brd =  gbroaden(toten,spftot, gbro) 
-
     with open("spftot_rc_gbro-"+str(gbro)+".dat", 'w') as f:
         writer = csv.writer(f, delimiter = '\t')
         writer.writerows(zip (toten, spftot_brd))
     
+    plt.plot(toten,spftot_brd,label="ftot_rc_bro");
     if extrinsic == 1 and bg == 1:
 
         interptot = interp1d(toten, spftot_brd, kind = 'linear', axis = -1)
         spfbg = []
-        enqp_exp = -0.609       # all of these should
+        enqp_exp = -0.13       # all of these should
         spfqp_exp = 4.833522   # be read from input
-        en0_exp = -17.671968   # or a file of exp
+        en0_exp = -16.671968   # or a file of exp
         spf0_exp = 2.1747096   # spectrum data
         beta = spf0_exp * 1./ np.trapz(spftot_brd[(toten>=
                             en0_exp)&(toten<=0)],toten[(toten>=en0_exp)&(toten<=0)])

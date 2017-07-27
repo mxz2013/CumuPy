@@ -159,6 +159,30 @@ def read_pjt_new(nkpt,nband,bdgw_min,nspin):
 
     return spjt, ppjt, dpjt
 
+def read_cs(Ephoton):
+    cs1=[]
+    cs2=[]
+    cs3=[]
+
+    if isfile("cs"+str(Ephoton)+".dat"):
+        print(" Reading file cs.dat... ")
+        lines_1 = [line.rstrip('\n') for line in
+                   open("cs"+str(Ephoton)+".dat")]
+        for plotPair in nonblank_lines(lines_1):
+            if not plotPair.startswith("#"):
+                xANDy =  plotPair.split()
+                cs1.append(float(xANDy[0].rstrip('\r')))
+                cs2.append(float(xANDy[1].rstrip('\r')))  
+                cs3.append(float(xANDy[2].rstrip('\r')))  
+        print(cs1)
+
+    else:
+        print("'CS'+str(Ephoton)+'.dat' not found")
+    cs1 = float(cs1[0])
+    cs2 = float(cs2[0])
+    cs3 = float(cs3[0])
+    return cs1, cs2, cs3
+    
 def read_R(rs):
     Rx = []
     Ry =[]
