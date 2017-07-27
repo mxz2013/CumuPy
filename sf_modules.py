@@ -62,11 +62,11 @@ def calc_spf_gw(cs1,cs2,cs3,pjt1,pjt2,pjt3,bdrange, kptrange, bdgw_min, wtk, en,
 
             spftot += spfkb*wtk[ik]
 
-            spf_sumb += spfkb*wtk[ik]
+            spf_sumb += spfkb
 
-            spf_sumb1 += spfkb*wtk[ik]*pjt1[ik,ib]*cs1 
-            spf_sumb2 += spfkb*wtk[ik]*pjt2[ik,ib]*cs2
-            spf_sumb3 += spfkb*wtk[ik]*pjt3[ik,ib]*cs3
+            spf_sumb1 += spfkb*pjt1[ik,ib]*cs1 
+            spf_sumb2 += spfkb*pjt2[ik,ib]*cs2
+            spf_sumb3 += spfkb*pjt3[ik,ib]*cs3
 
            # spftot_sumbp += spf_sumb1+spf_sumb2+spf_sumb3
 
@@ -402,10 +402,10 @@ def calc_toc11_new(gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,
                 spftot_pjt1 += spfkb*pjt1[ik,ib]*wtk[ik]*cs1
                 spftot_pjt2 += spfkb*pjt2[ik,ib]*wtk[ik]*cs2
                 spftot_pjt3 += spfkb*pjt3[ik,ib]*wtk[ik]*cs3
-                spf_sumb += spfkb*wtk[ik]
-                spf_sumb_pjt1 += spfkb*wtk[ik]*pjt1[ik,ib]*cs1
-                spf_sumb_pjt2 += spfkb*wtk[ik]*pjt2[ik,ib]*cs2
-                spf_sumb_pjt3 += spfkb*wtk[ik]*pjt3[ik,ib]*cs3
+                spf_sumb += spfkb
+                spf_sumb_pjt1 += spfkb*pjt1[ik,ib]*cs1
+                spf_sumb_pjt2 += spfkb*pjt2[ik,ib]*cs2
+                spf_sumb_pjt3 += spfkb*pjt3[ik,ib]*cs3
 
                 with open("TOC11-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+"-ext"+str(extrinsic)+".dat", 'w') as f:
                     writer = csv.writer(f, delimiter = '\t')
