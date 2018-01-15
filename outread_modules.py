@@ -34,7 +34,7 @@ def read_eqp_abinit():
         print("Done.")
         eqp_abinit = np.array(eqp_abinit);
     else:
-        print("eqp_abinit.dat not found!")
+        print("ERROR: eqp_abinit.dat not found!")
         sys.exit(1)
     return eqp_abinit
 
@@ -51,7 +51,6 @@ def read_hartree():
         hartree = np.array(hartree);
 
     elif isfile("E_lda.dat") and isfile("Vxc.dat"):
-        print(" Auxiliary file (hartree.dat) not found.")
         print(" Reading files E_lda.dat and Vxc.dat... ")
         Eldafile = open("E_lda.dat");
         Vxcfile = open("Vxc.dat");
@@ -68,9 +67,12 @@ def read_hartree():
         vxc = np.array(vxc);
         hartree = elda - vxc
     else:
-        print ("hartree.dat not found! Impossible to continue!!")
+        print ("ERROR: E_lda.dat not found!")
         sys.exit(1)
+    
+    #return hartree, hartree_ks
     return hartree
+    
 
 def read_hf():
     import numpy as np;
@@ -99,7 +101,7 @@ def read_lda():
         Elda = np.array(Elda);
 
     else:
-        print ("E_lda.dat not found!")
+        print ("ERROR: E_lda.dat not found!")
         sys.exit(1)
     return Elda
 def read_pjt_new(nkpt,nband,bdgw_min,nspin):
@@ -130,7 +132,7 @@ def read_pjt_new(nkpt,nband,bdgw_min,nspin):
                 data =  plotPair.split()
                 d_pjt.append(float(data[3].rstrip('\r')))
     else:
-        print ("pjt_x.dat not found!")
+        print ("ERROR: pjt_s.dat, or pjt_p.dat, or pjt_d.dat  not found!")
         sys.exit(1)
     tmp_k = 1
     spjt_new = []
@@ -164,47 +166,70 @@ def read_cs(Ephoton):
     cs2=[]
     cs3=[]
 
-    if isfile("cs"+str(Ephoton)+".dat"):
-        print(" Reading file cs.dat... ")
+    if isfile("cs_"+str(Ephoton)+".dat"):
+        print(" Reading file cs_"+str(Ephoton)+".dat... ")
         lines_1 = [line.rstrip('\n') for line in
-                   open("cs"+str(Ephoton)+".dat")]
+                   open("cs_"+str(Ephoton)+".dat")]
         for plotPair in nonblank_lines(lines_1):
             if not plotPair.startswith("#"):
                 xANDy =  plotPair.split()
                 cs1.append(float(xANDy[0].rstrip('\r')))
                 cs2.append(float(xANDy[1].rstrip('\r')))  
                 cs3.append(float(xANDy[2].rstrip('\r')))  
-        print(cs1)
 
     else:
-        print("'CS'+str(Ephoton)+'.dat' not found")
+        print('cs_'+str(Ephoton)+'.dat not found')
     cs1 = float(cs1[0])
     cs2 = float(cs2[0])
     cs3 = float(cs3[0])
     return cs1, cs2, cs3
     
-def read_R(rs):
-    Rx = []
-    Ry =[]
-    if isfile("R.dat"):
-        print(" Reading file R.dat... ")
+def read_wps():
+    wps1=[]
+    wps2=[]
+    if isfile("wp_s"+".dat"):
+        print(" Reading file wp_s.dat... ")
         lines_1 = [line.rstrip('\n') for line in
-                   open('R.dat')]
+                   open("wp_s.dat")]
         for plotPair in nonblank_lines(lines_1):
             if not plotPair.startswith("#"):
                 xANDy =  plotPair.split()
-                Rx.append(float(xANDy[0].rstrip('\r')))
+                wps1.append(float(xANDy[0].rstrip('\r')))
+                wps2.append(float(xANDy[1].rstrip('\r')))  
+
+    else:
+        print("wp_s.dat not found")
+    wps1 = float(wps1[0])
+    wps2 = float(wps2[0])
+    return wps1, wps2
+
+def read_R(lda_fermi,gwfermi,scgw, Ephoton):
+    if scgw == 1:
+        xfermi = gwfermi
+    else:
+        xfermi = lda_fermi
+    Rx = []
+    Ry =[]
+    if isfile("R_"+str(Ephoton)+".dat"):
+        print(" Reading file R_"+str(Ephoton)+".dat... ")
+        lines_1 = [line.rstrip('\n') for line in
+                   open('R_'+str(Ephoton)+'.dat')]
+        for plotPair in nonblank_lines(lines_1):
+            if not plotPair.startswith("#"):
+                xANDy =  plotPair.split()
+                #Rx.append(float(xANDy[0].rstrip('\r'))+xfermi)
+                Rx.append(float(xANDy[0].rstrip('\r'))+0)
                 Ry.append(float(xANDy[1].rstrip('\r')))  
     else: ## using fit function of Josh
-        print("Using fit function for R")
-        for i in np.arange(-60,60,0.01):
-            Rx.append(i)
-            if i < 0:
-                eta_rs = 0.274/(rs+0.76)+1.263
-                Ryi = (0.0025*rs**2 + 0.0225*rs - 0.0092)*(abs(i)**eta_rs)+1
-            elif i >= 0:
-                Ryi = 1
-            Ry.append(Ryi)
+        print("ERROR: file R_"+str(Ephoton)+".dat not found! ")
+      #  for i in np.arange(-60,60,0.01):
+      #      Rx.append(i)
+      #      if i < 0:
+      #          eta_rs = 0.274/(rs+0.76)+1.263
+      #          Ryi = (0.0025*rs**2 + 0.0225*rs - 0.0092)*(abs(i)**eta_rs)+1
+      #      elif i >= 0:
+      #          Ryi = 1
+      #      Ry.append(Ryi)
     return Rx,Ry
 
 def read_pjt():
@@ -232,7 +257,7 @@ def read_pjt():
         pjt3 = np.array(pjt3);
 
     else:
-        print ("pjt.dat not found!")
+        print ("ERROR: pjt.dat not found!")
         sys.exit(1)
     return pjt1, pjt2, pjt3
 
@@ -246,7 +271,7 @@ def read_wtk():
         wtkfile.close()
         wtk = np.array(wtk); 
     else :
-        print("wtk.dat not found!")
+        print("ERROR: wtk.dat not found!")
         sys.exit(1)
     return wtk
 
@@ -268,7 +293,7 @@ def read_sigfile(sigfilename, nkpt, bdgw_min, bdgw_max):
         insigfile = open(sigfilename);
     #elif sigfilename is None:
     else:
-        print("File "+ sigfilename+" not found.")
+        print("ERROR File"+sigfilename+" not found.")
         sigfilename = glob.glob('*_SIG')[0]
         print("Looking automatically for a _SIG file... ",sigfilename)
         insigfile = open(raw_input("Self-energy file name (_SIG): "))
@@ -291,16 +316,16 @@ def read_sigfile(sigfilename, nkpt, bdgw_min, bdgw_max):
         firstbd = bdgw_min
         lastbd = bdgw_max
         nbd = lastbd - firstbd + 1
-        print("nbd:",nbd)
+        #print("nbd:",nbd)
         num_cols = len(insigfile.readline().split())
         num_cols2 = len(insigfile.readline().split())
-        print("numcols:",num_cols)
-        print("numcols2:",num_cols2)
+        #print("numcols:",num_cols)
+        #print("numcols2:",num_cols2)
         if num_cols != num_cols2: 
-            print()
-            print(" WARNING: newlines in _SIG file.")
-            print(" Reshaping _SIG file structure...")
-            print(" _SIG file length (rows):", len(filelines))
+            #print()
+            #print(" WARNING: newlines in _SIG file.")
+            #print(" Reshaping _SIG file structure...")
+            #print(" _SIG file length (rows):", len(filelines))
             new_list = []
             nline = 0
             a = []
@@ -308,7 +333,7 @@ def read_sigfile(sigfilename, nkpt, bdgw_min, bdgw_max):
             for line in filelines:
                 #if line.split()[0] == "#":
                 if '#' in line:
-                    print(line.strip('\n'))
+            #        print(line.strip('\n'))
                     continue
                 elif nline == 0: 
                     a = line.strip('\n')
@@ -317,7 +342,7 @@ def read_sigfile(sigfilename, nkpt, bdgw_min, bdgw_max):
                     b = line.strip('\n')
                     new_list.append(a + " " + b)
                     nline = 0
-            print("New shape for _SIG array:",np.asarray(new_list).shape)
+            #print("New shape for _SIG array:",np.asarray(new_list).shape)
             tmplist = []
             tmplist2 = []
             for line in new_list:
@@ -339,25 +364,25 @@ def read_sigfile(sigfilename, nkpt, bdgw_min, bdgw_max):
             insigfile.seek(0)
             x = np.genfromtxt(sigfilename,usecols = xrange(1,num_cols), filling_values = 'myNaN')
     #nkpt = int(invar_dict['nkpt'])
-    print("nkpt:",nkpt)
+    #print("nkpt:",nkpt)
     #print("spin:",spin)
     #print("nspin:",nspin)
     # From a long line to a proper 2D array, then only first row
     #print(xen.shape)
-    print("x.shape", x.shape)
+    #print("x.shape", x.shape)
     #if spin == 1 and nspin == 0:
     #    nspin = 2
     #else:
     #    nspin = 1
     #print("nspin:",nspin)
     nspin = 1
-    print("size(xen):",xen.size)
-    print("The size of a single energy array should be",\
-            float(np.size(xen))/nkpt/nspin)
+   # print("size(xen):",xen.size)
+   # print("The size of a single energy array should be",\
+   #         float(np.size(xen))/nkpt/nspin)
     en = xen.reshape(nkpt*nspin,np.size(xen)/nkpt/nspin)[0]
     #en = xen.reshape(nkpt,np.size(xen)/nkpt)[0]
-    print("New shape en:",np.shape(en))
-    print("First row of x:",x[0])
+    #print("New shape en:",np.shape(en))
+    #print("First row of x:",x[0])
     #nb_clos = 3
   #  if invar_dict['gwcode'] == 'abinit':
    #     nb_cols = 3
@@ -365,14 +390,14 @@ def read_sigfile(sigfilename, nkpt, bdgw_min, bdgw_max):
    #     nb_cols = 2
        #b = x.reshape(nkpt*nspin, np.size(x)/nkpt/nspin/nbd/3, 3*nbd)
     b = x.reshape(nkpt*nspin, np.size(x)/nkpt/nspin/nbd/3, 3*nbd)
-    print("New shape x:", b.shape)
+    #print("New shape x:", b.shape)
     y = b[0::nspin,:, 0::3]
     z = b[0::nspin,:, 1::3]
     res = np.rollaxis(y, -1, 1)
     ims = np.rollaxis(z, -1, 1)
-    print("New shape res, ims:", res.shape)
-    print("First and last band in _SIG file:", firstbd, lastbd)
-    print(" Done.")
+    #print("New shape res, ims:", res.shape)
+    #print("First and last band in _SIG file:", firstbd, lastbd)
+    print(" Reading sigma Done.")
 
     return en, res, ims 
 

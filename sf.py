@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from __future__ import print_function
-from sf_modules import *
+#from sf_modules_tmp import *
 from outread_modules import *
 from sf_crc_modules import *
 import numpy as np;
@@ -23,67 +23,75 @@ if isfile("invar.in"):
     for line in infile.readlines():
         word = line.split()
         invar[word[-1]] = word[0]
-        #print "invar:", invar
     infile.close()
     if 'sigmafile' in invar:  ## The name of the self-energy file.
         sigfilename = invar['sigmafile'];
     else:
         sigfilename = 'default_SIG';
 
+    print ("name of the sigma file:",  sigfilename   )
     if 'outname' in invar:  ## using wtk.dat or not 
         outname = str(invar['outname']);
     else:
         outname = 'Spfunctions';
+    print ("name of the output folder:",  outname   )
 
-    if 'rs_heg' in invar:  ## using wtk.dat or not 
-        rs = float(invar['rs_heg']);
-    else:
-        rs = 0;
     if 'wtk' in invar:  ## using wtk.dat or not 
         flag_wtk = int(invar['wtk']);
     else:
         flag_wtk = 1;
-    if 'core_rc' in invar:  ##  
-        core = int(invar['core_rc']);
-    else:
-        core = 0;
+        print ("including weight of the k points or not:", flag_wtk)
+
     if 'extrinsic' in invar:  ## calculate extrinsic spf 
         extrinsic = int(invar['extrinsic']);
     else:
         extrinsic = 0;
-    if 'background' in invar:  ## using wtk.dat or not 
-        bg = int(invar['background']);
-    else:
-        bg = 0;
+        print ("extrinsic and interference or not:", extrinsic)
 
     if 'pjt' in invar:  ## projections 
         flag_pjt = int(invar['pjt']);
     else:
         flag_pjt = 0;
+
+    print ("include projections or not:", flag_pjt)
+
     if 'Ephoton' in invar:  ## photon-energy 
         Ephoton = float(invar['Ephoton']);
     else:
         Ephoton = 0.0;
+
+    print ("photon energy (only if extrinsic is on or projections are provided):", Ephoton)
     if 'scgw' in invar:  #one-shot G0W0 or scGW self-energy
         scgw = int(invar['scgw']); 
     else:
         scgw = 1;
+    print ("scgw or not:", scgw)
+
     if 'nspin' in invar: ## spin-polarized or not
         nspin = int(invar['nspin']);
     else:
         nspin = 1;
-    if 'Eplasmon' in invar: # for advanced user, an estimation of integration
+    print ("number of spin chanel (1 or 2):", nspin)
+
+    if 'Eplasmon' in invar: # an estimation of the plasmon energy  
+                            # normaly taken to be the clasical plasmon energy
+                            # at q=0, i.e., wp=sqrt(4\pi n) where n is the
+                            # valence electron density.
         Eplasmon = int(invar['Eplasmon']) #range for C(t)
     else:
-        Eplasmon = 50
+        Eplasmon = 20
+    print ("The classical plasmon energy is about: ", Eplasmon)
     if 'minband' in invar: #the first band to be calculated
         minband = int(invar['minband'])
     else:
         minband=1
+    
     if 'maxband' in invar:  # the last band to be calculated
         maxband = int(invar['maxband'])
     else:
         maxband = 1
+    print ("the first and last band to be calculated :", minband,maxband)
+
     if 'bdgw_min' in invar: # the label of the first band in SIG file.
         bdgw_min = int(invar['bdgw_min']) # consistent with input of abinit:bdgw 
     else:
@@ -92,6 +100,10 @@ if isfile("invar.in"):
         bdgw_max = int(invar['bdgw_max']) # consistent with input of abinit:bdgw
     else:
     	bdgw_max = 1
+    print ("the first and last band in GW calculation :", bdgw_min, bdgw_max)
+    print ("""Note that minband cannot be smaller than bdga_min, and maxband
+           cannot be bigger than bdgw_max""")
+
     if 'minkpt' in invar: # the first k to be calculated
         minkpt = int(invar['minkpt'])
     else:
@@ -100,10 +112,15 @@ if isfile("invar.in"):
     	maxkpt = int(invar['maxkpt'])
     else:
     	maxkpt = 1  # the last k to be calculated
+
     if 'nkpt' in invar:
     	nkpt = int(invar['nkpt'])*nspin
     else:
     	nkpt = maxkpt - minkpt + 1
+
+    print ("total k number, mink, and maxk to be calculated are :",  nkpt,
+           minkpt, maxkpt)
+
     if 'enmin' in invar: # the minimum \omega in A(\omega)
     	enmin = float(invar['enmin'])
     else:
@@ -112,32 +129,30 @@ if isfile("invar.in"):
     	enmax = float(invar['enmax'])
     else:
     	enmax = 0.0 
+    print("the minimum and maxmum frequency will be calculated in cumulant :",enmin, enmax)
     
-    if 'sfactor' in invar: # not implemented yet
-    	sfac = float(invar['sfactor'])
-    else:
-    	sfac=1.0
-    if 'pfactor' in invar:  # not implemented yet
-    	pfac = float(invar['pfactor'])
-    else:
-    	pfac=1.0
-    if 'penergy' in invar: # not implemented yet
+    if 'penergy' in invar: # 
     	penergy = int(invar['penergy'])
     else:
     	penergy = 0
-    if 'extinf' in invar:  # not implemented yet
-        extinf = float(invar['extinf']);
+
+    print("photon energy used in cross section and extrinsic calculation: ",
+          penergy)
+    if 'wps' in invar:  # data from Josh used for surface plasmon calculation.  
+        wps = int(invar['wps']);
     else:
-        extinf = 0
+        wps = 0
+
+    print ("surface plasmons (1 yes and 0 no)", wps)
+
     if 'calc_gw' in invar:  #enable GW calculation
     	flag_calc_gw = int(invar['calc_gw'])
     else:
     	flag_calc_gw = 0
-    if 'spf_qp' in invar:  #enable GW calculation
+    if 'spf_qp' in invar:  #enable QP calculation
     	spf_qp = int(invar['spf_qp'])
     else:
     	spf_qp = 0
-
     if 'calc_toc96' in invar: #enable TOC96 calculation
     	flag_calc_toc96 = int(invar['calc_toc96'])
     else:
@@ -146,21 +161,27 @@ if isfile("invar.in"):
     	flag_calc_toc11 = int(invar['calc_toc11'])
     else:
     	flag_calc_toc11 = 0
-    
     if 'calc_rc' in invar: # enable retarded cumulant calculation
     	flag_calc_rc = int(invar['calc_rc'])
     else:
-    	iflag_calc_rc = 0
+    	flag_calc_rc = 0
     if 'rc_Josh' in invar: # enable retarded cumulant calculation
     	rc_Josh = int(invar['rc_Josh'])
     else:
     	rc_Josh = 0
-    
     if 'calc_crc' in invar: #enable CRC so as TOC96 calculation
     	flag_calc_crc = int(invar['calc_crc']) # CRC implementation is not
-                                            #ready yet!!
     else:
     	flag_calc_crc = 0
+    print ("Spectral functions will be calculated are: ")
+    print ("GW", flag_calc_gw)
+    print ("QP", spf_qp)
+    print ("TOC11", flag_calc_toc11)
+    print ("RC", flag_calc_rc)
+    print ("RC of J. Kas (not recommended)", rc_Josh)
+    print ("TOC96 (not recommended)", flag_calc_toc96)
+    print ("CRC (not ready yet)", flag_calc_crc)
+
     if 'gwfermi' in invar: #Fermi enegy after GW calculation
         gwfermi = float(invar['gwfermi']);
     else:
@@ -169,22 +190,38 @@ if isfile("invar.in"):
         lda_fermi = float(invar['lda_fermi']); # will be used
     else:                                    #when scgw=0
         lda_fermi = 0.0
+
+    print ("The LDA and GW fermi energies are :", lda_fermi, gwfermi)
+
     if 'invar_den' in invar: #d\omega in the cumulant A(\omega) 
     	invar_den = float(invar['invar_den']) # for the moment the choices 
     else:                                 # are 0.05, 0.025, 0.0125, 0.01,0.005
     	invar_den = 0.05
-    if 'metal_valence' in invar: # TOC for metal valence is implemented
-        metal_valence = float(invar['metal_valence']) #different with core
-    else:
-        metal_valence = 0
     if 'invar_eta' in invar: #lorentzian broadening of all cumulant A(\omega)
         invar_eta = float(invar['invar_eta'])
     else:
         invar_eta = 0.1
+        
+    print ("the energy resolution and Lorentzian broadening are :", invar_den, invar_eta)
+    print (""""Note that invar_den must be chosen from 0.05, 0.025, 0.0125,
+           0.01, 0.005, and invar_eta must be equal or bigger than invare_den
+           for convergence""")
+    if 'metal_valence' in invar: # TOC for metal valence is implemented
+        metal_valence = float(invar['metal_valence']) #different with core
+    else:
+        metal_valence = 0
+    if 'core_only' in invar: # TOC for metal valence is implemented
+        core = float(invar['core_only']) #different with core
+    else:
+        core = 0
+    if 'Fermi_temp' in invar: # Temperature in Fermi-function Kelvin 
+        Temp = float(invar['Fermi_temp'])
+    else:
+        Temp = 300.0
     if 'Gaussian' in invar: #lorentzian broadening of all cumulant A(\omega)
         gbro = float(invar['Gaussian'])
     else:
-        gbro = 0.01
+        gbro = 0.1
     if 'npoles' in invar: #lorentzian broadening of all cumulant A(\omega)
         npoles = int(invar['npoles'])
     else:
@@ -196,20 +233,34 @@ if isfile("invar.in"):
             FFTtsize = int(FFTtsize+1)
     else:
         FFTtsize = int(5000)
-    
+    print ("the time step for FFT (need to be converged!) :", FFTtsize)    
     if 'abinit_eqp' in invar: # use eqp from abinit or recalculated
     	abinit_eqp = int(invar['abinit_eqp']) #in this code.
     else:
     	abinit_eqp = 0 
+    print("input GW QP energy or not: :", abinit_eqp)
+
+    print (""" if aninit_eqp = 1, the code will not calculate the QP energy
+           using w-e-ReSigma(w)=0, but read directly the input file
+           eqp_abinit.dat.
+          """)
 else :
     print ("Invar file not found (invar.in). Impossible to continue.")
     sys.exit(1)
 print ("Reading invar done.")
-#print(" "+"===="+" Input variables "+"====")
-#print()
+print(" "+"===="+" Input variables "+"====")
+
+
 #npoles = int(150)  #for sampling Im\Sigma lesser to calculate crc_unocc
 nband = bdgw_max - bdgw_min + 1
-hartree = read_hartree()
+#hartree, hartree_ks = read_hartree()
+hartree= read_hartree()
+#with open("hartree_gw.dat", 'w') as f:
+#    writer = csv.writer(f, delimiter = '\t')
+#    writer.writerows(zip (hartree))
+#with open("hartree_ks.dat", 'w') as f:
+#    writer = csv.writer(f, delimiter = '\t')
+#    writer.writerows(zip (hartree_ks))
 if rc_Josh == 1:
     Sigx = read_hf()
     ehf = hartree + Sigx
@@ -235,6 +286,16 @@ else:
           WARNING: Weight of k points are neglected!
          """)
     wtk = [1]*nkpt
+
+if wps == 1:
+    wps1, wps2 = read_wps()
+else:
+    print(""" WARNING:
+          Surface plasmons are not calculated!
+         """)
+    wps1 = 0.
+    wps2 = 0.
+
 if flag_pjt == 1:
     pjt1, pjt2, pjt3 =read_pjt_new(nkpt,nband,bdgw_min,nspin) #  read_pjt()
     cs1, cs2, cs3 = read_cs(Ephoton)
@@ -245,9 +306,9 @@ else:
     pjt1 = np.zeros((nkpt,nband))
     pjt2 = np.zeros((nkpt,nband))
     pjt3 = np.zeros((nkpt,nband))
-    cs1 = 0
-    cs2 = 0
-    cs3 = 0
+    cs1 = 0.
+    cs2 = 0.
+    cs3 = 0.
 
 with open("pjt1.dat", 'w') as f:
     writer = csv.writer(f, delimiter = '\t')
@@ -258,10 +319,13 @@ with open("pjt2.dat", 'w') as f:
 with open("pjt3.dat", 'w') as f:
     writer = csv.writer(f, delimiter = '\t')
     writer.writerows(zip (pjt3))
+
+#sys.exit(1)
+
 en, res, ims = read_sigfile(sigfilename, nkpt, bdgw_min, bdgw_max)
 
 if extrinsic == 1:
-    Rx, Ry = read_R(rs)
+    Rx, Ry = read_R(lda_fermi,gwfermi,scgw,Ephoton)
 else:
     Rx = 1
     Ry = 1
@@ -285,66 +349,14 @@ kptrange = xrange(minkpt - 1, maxkpt*nspin)
 #print(" Moving into output directory:\n ", newdir)
 #if not isdir(newdir) :
 #    mkdir(newdir)
-
-def gbroaden(x,f,sigma):
-	x = np.asarray(x)
-	f = np.asarray(f)
-	xsize = np.size(x)
-	broadf = np.zeros(f.size)
-	print("gbroaden() called, x.size:", x.size)
-	#dx =  x[1] - x[0] 
-        dx =  ( x[-1] - x[0] ) / float(xsize - 1)
-	print("gbroaden() called, gaussian window size (4 x sigma):", 4*sigma)
-	for n in xrange(xsize):
-		if  abs( x[n] - x[0] ) > 4*sigma : 
-			nrange = n
-			print("gbroaden() called, gaussian window size (4 x sigma) in x units (e.g. eV?):", x[nrange] - x[0])
-			break
-	if 4*sigma < dx*xsize/2 :
-		# First chunk (beginning)
-		for n in xrange(0,nrange):
-#	#		print "Processing... "+str(int(n/xsize)*100)+"\r",
-			for m in xrange(n-nrange,n+nrange):
-#	#			gaub = np.exp( - ( x[n] - x[m] )**2 / 2 / sigma**2 ) / np.sqrt(2*np.pi) / sigma
-				gaub = dx * np.exp( - ( dx * ( m - n ) )**2 / 2 / sigma**2 ) / np.sqrt(2*np.pi) / sigma
-				if m >= 0 : 
-					broadf[n] += f[m] * gaub
-				else : 
-					broadf[n] += f[0] * gaub
-		# Last chunk (end)
-		for n in xrange(xsize-nrange,xsize):
-#	#		print "Processing... "+str(int(nrange+n/xsize)*100)+"\r",
-			for m in xrange(n-nrange,n+nrange):
-#	#			gaub = np.exp( - ( x[n] - x[m] )**2 / 2 / sigma**2 ) / np.sqrt(2*np.pi) / sigma
-				gaub = dx * np.exp( - ( dx * ( m - n ) )**2 / 2 / sigma**2 ) / np.sqrt(2*np.pi) / sigma
-				if m < xsize : 
-					broadf[n] += f[m] * gaub
-				else : 
-					broadf[n] += f[-1] * gaub
-		# Middle chunk (treated with the standard formula)
-		for n in xrange(nrange,xsize-nrange):
-#	#		print "Processing... "+str(int(n/xsize)*100)+"\r",
-			for m in xrange(n-nrange,n+nrange):
-				gaub = dx * np.exp( - ( dx * ( m - n ) )**2 / 2 / sigma**2 ) / np.sqrt(2*np.pi) / sigma
-				#gaub = dx * np.exp( - ( x[n] - x[m] )**2 / 2 / sigma**2 ) / np.sqrt(2*np.pi) / sigma
-				broadf[n] += f[m] * gaub
-	else :
-		# Standard formula regardless of boundaries (it should work decently in all cases)
-		for n in xrange(xsize):
-#	#		print "Processing... "+str(int(n/xsize)*100)+"\r",
-			for m in xrange(xsize):
-				gaub = dx * np.exp( - ( dx * ( m - n ) )**2 / 2 / sigma**2 ) / np.sqrt(2*np.pi) / sigma
-				#gaub = dx * np.exp( - ( x[n] - x[m] )**2 / 2 / sigma**2 ) / np.sqrt(2*np.pi) / sigma
-				broadf[n] += f[m] * gaub
-#	af = np.trapz(f)
-#	abf = np.trapz(broadf)
-#	print af, abf
-#	broadf = broadf * af / abf
-	return broadf
-
-#print ("Moving back to parent directory:\n", origdir)
-#chdir(newdir)
-# ======== READING _SIG FILE ======= #
+################# the Fermi function
+def fermi_function(x, Temp):
+    Bolz = 1.3806485279e-23 # J/K.
+    mu = 0.0
+    Joule2eV = 6.241506363094e18
+    f = 1./(1.+ np.exp((x-mu)/(Bolz*Temp*Joule2eV)))
+    return f
+###################################
 ### ===================================================== ###
 print(" # ------------------------------------------------ # ")
 # Here we move to a subdirectory to avoid flooding-up the current directory
@@ -358,21 +370,38 @@ if not isdir(newdir) :
 chdir(newdir)
 
 if abinit_eqp == 1:   
+    print("""
+          WARNING: you choose to provide the GW QP energy
+          as imput. Please provide the file named "eqp_abinit.dat"
+          in the good format.
+         """)
     eqp_abinit = read_eqp_abinit()
     eqp = eqp_abinit
     with open("eqp_abinit.dat", 'w') as f:
         writer = csv.writer(f, delimiter = '\t')
         writer.writerows(zip (eqp-gwfermi))
 else:
+
+    print("""
+          WARNING: you choose to calculate the GW QP energy from 
+          this code by finding the solution of 
+          "w-e_{ks}+V_{xc}-Re\Sigma_{xc}(w)=0". Cross check is 
+          recommended with the GW QP energy from abinit or other 
+          code.
+         """)
+    from calc_qp import *
     eqp, imeqp = calc_eqp_imeqp(nspin,spf_qp,wtk,bdrange,kptrange,bdgw_min, en, enmin, enmax, res, ims,
-                                hartree, gwfermi, nkpt, nband, scgw, Elda)
+                                hartree, gwfermi, nkpt, nband, scgw,
+                                Elda,pjt1,pjt2,pjt3,cs1,cs2,cs3)
 
 ### ================================= ###
 ### ===== GW SPECTRAL FUNCTION ====== ###
 # GW spectral function part
 t_pregw = time.time() 
 if flag_calc_gw == 1:
+    from sf_gw import * 
     print(" # ------------------------------------------------ # ")
+    print("Calculate GW begins ")
     if nspin == 2:
         from sf_modules_spin import calc_spf_gw_spin
         newen, spftot_up,up1,up2,up3, spftot_down, d1,d2,d3 = calc_spf_gw_spin(pjt1,pjt2,pjt3,bdrange, kptrange,
@@ -383,36 +412,25 @@ if flag_calc_gw == 1:
              writer = csv.writer(f, delimiter = '\t')
              writer.writerow(['# w-fermi','# spftot_up','# spftot_up_s','# spftot_up_p','# spftot_up_d','# spftot_down','# spftot_down_s','# spftot_down_p','# spftot_down_d'])
              writer.writerows(zip( newen, spftot_up, up1,up2,up3, spftot_down, d1,d2,d3))
-        #outname = "spftot_gw"+"_s"+str(sfac)+"_p"+str(pfac)+"_"+str(penergy)+"ev"+".dat"
-        #outfile = open(outname,'w')
-        #for i in xrange(np.size(newen)):
-        #    outfile.write("%7.4f %15.10e %15.10e\n"% (newen[i],
-        #                                              spftot_up[i], spftot_down[i])) # Dump string representations of arrays
-        #outfile.close()
-        #print(" A(\omega)_GW written in", outname)
         plt.plot(newen,spftot_up,label="ftot_gw_SpinUp")
         plt.plot(newen,spftot_down,label="ftot_gw_SpinDown")
 
-       # plt.plot( newen,spftot_down,label="ftot_gw_SpinDown")
 
     elif nspin == 1:
-        newen, spftot, spftot_pjt1, spftot_pjt2, spftot_pjt3 = calc_spf_gw(cs1,cs2,cs3,pjt1,pjt2,pjt3,bdrange, kptrange, bdgw_min, wtk, en, enmin, enmax, res, ims, hartree, gwfermi, invar_eta)
-       # print(" ### Writing out A(\omega)_GW...  ")
+        newen, spftot, spftot_pjt1, spftot_pjt2, spftot_pjt3,sumkbp = calc_spf_gw(cs1,cs2,cs3,pjt1,pjt2,pjt3,bdrange, kptrange, bdgw_min, wtk, en, enmin, enmax, res, ims, hartree, gwfermi, invar_eta)
         with open("spftot_gw.dat",'w') as f:
              writer = csv.writer(f, delimiter = '\t')
-             writer.writerow(['# w-fermi','# spftot','# spftot_s','# spftot_p','# spftot_d'])
-             writer.writerows(zip( newen, spftot, spftot_pjt1, spftot_pjt2, spftot_pjt3))
+             writer.writerow(['# w-fermi','# spftot','# spftot_s','#spftot_p','# spftot_d','sumkbp'])
+             writer.writerows(zip( newen, spftot, spftot_pjt1, spftot_pjt2,
+                                  spftot_pjt3,sumkbp))
 
-        spftot_brd =  gbroaden(newen,spftot, gbro) 
-        with open("spftot_gw_gbro-"+str(gbro)+".dat", 'w') as f:
-            writer = csv.writer(f, delimiter = '\t')
-            writer.writerows(zip (newen, spftot_brd))
-
-        plt.plot(newen,spftot_brd,label="ftot_gw_bro");
+        plt.plot(newen,spftot,label="spf-gw");
+#######################################################################################
 
 if flag_calc_toc11 == 1:
     if nspin == 2: 
         from sf_modules_spin import calc_toc11_spin
+        print("# ------------------------------------------------ #")
         print( "Calculating spin polarized TOC11 begins")
         interp_en, up, up1, up2, up3, down, d1, d2, d3 =  calc_toc11_spin(pjt1,
                                                                           pjt2,
@@ -439,41 +457,27 @@ if flag_calc_toc11 == 1:
              writer.writerows(zip( newen, up, up1,up2,up3, down, d1,d2,d3))
        # print(" ### Writing out A(\omega)_TOC11...  ")
 
-        #outname = "spftot_toc11"+"_s"+str(sfac)+"_p"+str(pfac)+"_"+str(penergy)+"ev"+".dat"
-        #outfile = open(outname,'w')
-        #for i in xrange(len(interp_en)):
-        #    outfile.write("%8.4f %12.8e %12.8e\n" % (interp_en[i], toc_tot_up[i],
-        #                                      toc_tot_down[i]))
-        #outfile.close()
-        #print(" A(\omega)_TOC11 written in", outname)
         plt.plot(interp_en,up,label="ftot_toc11_SpinUp");
         plt.plot(interp_en,down,label="ftot_toc11_SpinDown");
 
-       # print (" ### Writing out A(\omega)_TOC11..")
     else:
+        from sf_toc11 import *
+        print("# ------------------------------------------------ #")
         print( "Calculating TOC11 begins")
-        en_toc11, toc11_tot, tot_s, tot_p,tot_d =calc_toc11_new(gwfermi,lda_fermi, bdrange, bdgw_min, kptrange,
-                       FFTtsize, en,enmin, enmax, eqp, Elda,scgw, Eplasmon, ims,
-                                            invar_den, invar_eta, wtk,
-                                            metal_valence,nkpt,nband, Rx, Ry,
-                                             extrinsic,pjt1,pjt2,pjt3,cs1,cs2,cs3)
+        en_toc11, toc11_tot, tot_s,tot_p,tot_d,sumkbp = calc_toc11(wps1,wps2,gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
+                    eqp, Elda, scgw, Eplasmon, ims, invar_den,
+                    invar_eta, wtk, metal_valence,nkpt,nband,Rx, Ry,
+                   extrinsic,pjt1,pjt2,pjt3,cs1,cs2,cs3)
+        
         
         with open("spftot_toc11"+"-ext"+str(extrinsic)+".dat",'w') as f:
              writer = csv.writer(f, delimiter = '\t')
-             writer.writerow(['# w-fermi','# spftot','# spftot_s','# spftot_p','# spftot_d'])
-             writer.writerows(zip( en_toc11, toc11_tot, tot_s, tot_p,tot_d))
-        #outname = "spftot_toc11"+"-ext"+str(extrinsic)+".dat"
-        #outfile = open(outname,'w')
-        #for i in xrange(len(en_toc11)):
-        #    outfile.write("%8.4f %12.8e\n" % (en_toc11[i], toc11_tot[i]))
-        #outfile.close()
-        #print(" A(\omega)_TOC11 written in", outname)
-        #print (" ### Writing out A(\omega)_TOC11..")
-        spftot_brd =  gbroaden(en_toc11, toc11_tot, gbro) 
-        with open("spftot_toc11_gbro-"+str(gbro)+".dat", 'w') as f:
-            writer = csv.writer(f, delimiter = '\t')
-            writer.writerows(zip ( en_toc11, spftot_brd))
-        plt.plot(en_toc11,spftot_brd,label="ftot_toc11_brd");
+             writer.writerow(['# w-fermi','# spftot','# spftot_s','#spftot_p','# spftot_d','sumkbp'])
+             writer.writerows(zip( en_toc11, toc11_tot, tot_s, tot_p,tot_d,
+                                  sumkbp))
+        plt.plot(en_toc11, toc11_tot,label="spf-toc11");
+
+##################################################################################
 if flag_calc_crc == 1:
     print("# ------------------------------------------------ #")
     print("Calulating CRC begines::")
@@ -502,55 +506,26 @@ if flag_calc_crc == 1:
     plt.plot(en_crc,toc96tot,label="ftot_toc96");
 
 if flag_calc_rc == 1:
+    from sf_toc11 import *
+    from sf_rc import *
     print("# ------------------------------------------------ #")
     print ("Calculating RC begins")
-    toten, spftot = calc_rc (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
-                    eqp, Elda, scgw, ims, invar_den,
-                             invar_eta,wtk,nkpt,nband,Rx, Ry, extrinsic,
-                             core,Eplasmon) 
+    en_rc, spftot,tots,totp,totd,sumkbp = calc_rc (wps1,wps2,gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
+                    eqp, Elda, scgw, ims, invar_den, invar_eta,wtk,nkpt,nband,Rx, Ry, extrinsic,
+                             core,Eplasmon,pjt1,pjt2,pjt3,cs1,cs2,cs3) 
     print (" ### Writing out A(\omega)_rc...  ")
 
-    outname = "spftot_rc"+"-ext"+str(extrinsic)+".dat"
-    outfile = open(outname,'w')
-    for i in xrange(len(toten)):
-        outfile.write("%8.4f %12.8e\n" % (toten[i], spftot[i]))
-    outfile.close()
+    with open("spftot_rc"+"-ext"+str(extrinsic)+".dat",'w') as f:
+         writer = csv.writer(f, delimiter = '\t')
+         writer.writerow(['# w-fermi','# spftot','# spftot_s','# spftot_p','#spftot_d','sum_kbp'])
+         writer.writerows(zip( en_rc, spftot, tots,totp,totd,sumkbp))
     print (" A(\omega)_rc written in", outname)
 
-    spftot_brd =  gbroaden(toten,spftot, gbro) 
-    with open("spftot_rc_gbro-"+str(gbro)+".dat", 'w') as f:
-        writer = csv.writer(f, delimiter = '\t')
-        writer.writerows(zip (toten, spftot_brd))
-    
-    plt.plot(toten,spftot_brd,label="ftot_rc_bro");
-    if extrinsic == 1 and bg == 1:
-
-        interptot = interp1d(toten, spftot_brd, kind = 'linear', axis = -1)
-        spfbg = []
-        enqp_exp = -0.13       # all of these should
-        spfqp_exp = 4.833522   # be read from input
-        en0_exp = -16.671968   # or a file of exp
-        spf0_exp = 2.1747096   # spectrum data
-        beta = spf0_exp * 1./ np.trapz(spftot_brd[(toten>=
-                            en0_exp)&(toten<=0)],toten[(toten>=en0_exp)&(toten<=0)])
-        alpha = 1./interptot(enqp_exp)*abs(spfqp_exp - beta * np.trapz(spftot_brd[(toten>=enqp_exp)&
-                                                   (toten<=0)],toten[(toten>=enqp_exp)&(toten<=0)])) 
-        for w in toten:
-            if w < 0:
-                spf_tmp = np.trapz(spftot_brd[(toten>=w)&(toten<=0)],toten[(toten>=w)&(toten<=0)])
-            else:
-                spf_tmp = 0
-            spf = alpha*interptot(w) + beta*spf_tmp
-            spfbg.append(spf)
-
-        with open("spftot_rc_full.dat", 'w') as f:
-            writer = csv.writer(f, delimiter = '\t')
-            writer.writerows(zip (toten, spfbg))
-    
-        plt.plot(toten,spfbg,label="ftot_rc_ext_bg");
-
+    plt.plot( en_rc, spftot,label="spf-rc");
+#######################################################################################
 
 if rc_Josh == 1:
+    from sf_rc import *
 
     toten, spftot = calc_rc_Josh (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
                     eqp, Elda, scgw, ims, invar_den, invar_eta, wtk, ehf) 
