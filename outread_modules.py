@@ -76,16 +76,20 @@ def read_hartree():
 
 def read_hf():
     import numpy as np;
-
-    if isfile("Sig_x.dat"):
-        print(" Reading Sig_x.dat... ")
-        Sigxfile = open("Sig_x.dat");
+    if isfile("Sigx.dat"):
+        print(" Reading Sigx.dat... ")
+        Sigxfile = open("Sigx.dat");
         Sig_x = []; 
         for line in Sigxfile.readlines():
             Sig_x.append(map(float,line.split()));
         Sigxfile.close()
         print("Done.")
         Sig_x = np.array(Sig_x);
+    else:
+        print("""
+              WARNING: No Sigx.dat provided! Thus RC of Josh and TC original
+              will not calculated!!
+              """)
     return Sig_x
 
 def read_lda():

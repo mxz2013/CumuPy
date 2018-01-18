@@ -154,6 +154,10 @@ if isfile("invar.in"):
     	flag_calc_toc11 = int(invar['calc_toc11'])
     else:
     	flag_calc_toc11 = 0
+    if 'calc_toc_original' in invar: 
+    	flag_calc_toc = int(invar['calc_toc_original'])
+    else:
+    	flag_calc_toc = 0
     if 'calc_rc' in invar: # enable retarded cumulant calculation
     	flag_calc_rc = int(invar['calc_rc'])
     else:
@@ -170,6 +174,7 @@ if isfile("invar.in"):
     print ("GW", flag_calc_gw)
     print ("QP", spf_qp)
     print ("TOC11", flag_calc_toc11)
+    print ("TOC original", flag_calc_toc)
     print ("RC", flag_calc_rc)
     print ("RC of J. Kas (not recommended)", rc_Josh)
     print ("TOC96 (not recommended)", flag_calc_toc96)
@@ -252,9 +257,9 @@ hartree= read_hartree()
 #with open("hartree_ks.dat", 'w') as f:
 #    writer = csv.writer(f, delimiter = '\t')
 #    writer.writerows(zip (hartree_ks))
-if rc_Josh == 1:
-    Sigx = read_hf()
-    ehf = hartree + Sigx
+Sigx = read_hf()
+ehf = hartree + Sigx
+
 
 if scgw == 0:
     print("""
@@ -514,19 +519,42 @@ if flag_calc_rc == 1:
 
     plt.plot( en_rc, spftot,label="spf-rc");
 #######################################################################################
-
+### this module calculates the RC of Josh
 if rc_Josh == 1:
+    from sf_toc11 import *
     from sf_rc import *
+    print("# ------------------------------------------------ #")
+    print ("Calculating RC of Josh begins")
+    en_rc, spftot,tots,totp,totd,sumkbp = calc_rc_Josh (ehf,wps1,wps2,gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
+                    eqp, Elda, scgw, ims, invar_den, invar_eta,wtk,nkpt,nband,Rx, Ry, extrinsic,
+                             core,Eplasmon,pjt1,pjt2,pjt3,cs1,cs2,cs3) 
 
-    toten, spftot = calc_rc_Josh (gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
-                    eqp, Elda, scgw, ims, invar_den, invar_eta, wtk, ehf) 
+    with open("spftot_rc_Josh"+"-ext"+str(extrinsic)+".dat",'w') as f:
+         writer = csv.writer(f, delimiter = '\t')
+         writer.writerow(['# w-fermi','# spftot','# spftot_s','# spftot_p','#spftot_d','sum_kbp'])
+         writer.writerows(zip( en_rc, spftot, tots,totp,totd,sumkbp))
+    print (" A(\omega)_rc written in", outname)
 
-    outname = "spftot_rc_Josh"+".dat"
-    outfile = open(outname,'w')
-    for i in xrange(len(toten)):
-        outfile.write("%8.4f %12.8e\n" % (toten[i], spftot[i]))
-    outfile.close()
-    plt.plot(toten,spftot,label="ftot_rc_Josh");
+    plt.plot( en_rc, spftot,label="spf-rc-Josh");
+if flag_calc_toc == 1:
+    from sf_toc11 import *
+    print("# ------------------------------------------------ #")
+    print( "Calculating TOC oringial begins")
+    en_toc11, toc11_tot, tot_s,tot_p,tot_d,sumkbp = calc_toc(ehf,wps1,wps2,gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
+                eqp, Elda, scgw, Eplasmon, ims, invar_den,
+                invar_eta, wtk, metal_valence,nkpt,nband,Rx, Ry,
+               extrinsic,pjt1,pjt2,pjt3,cs1,cs2,cs3)
+    
+    
+    with open("spftot_toc11"+"-ext"+str(extrinsic)+".dat",'w') as f:
+         writer = csv.writer(f, delimiter = '\t')
+         writer.writerow(['# w-fermi','# spftot','# spftot_s','#spftot_p','# spftot_d','sumkbp'])
+         writer.writerows(zip( en_toc11, toc11_tot, tot_s, tot_p,tot_d,
+                              sumkbp))
+
+    plt.plot(en_toc11, toc11_tot,label="spf-toc");
+#print ("Moving back to parent directory:\n", origdir)
+#chdir(newdir)
 
 print ("Moving back to parent directory:\n", origdir)
 chdir(newdir)
@@ -538,6 +566,7 @@ t3 = end_time - start_time
 #title = 'Spectral function '+ 'A (' + r'$\omega $ ' + ') - '+r'$ h\nu = $'+str(penergy)+' eV'
 #plt.title(title)
 plt.legend(loc=2);
+plt.savefig('spftot.eps', format='eps', dpi=1000)
 plt.show();
 
 t4 = t3
