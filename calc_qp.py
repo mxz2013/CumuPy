@@ -154,7 +154,7 @@ def calc_eqp_imeqp(nspin,spf_qp, wtk,bdrange, kptrange,bdgw_min, en,enmin,
             #    print()
             #    print(""" WARNING: im(Sigma(e_k)) <= 0 !!! ik ib e_k
             #          im(Sigma(e_k)) = """, ik+1, ib+1, eqp[ik,ib], imeqp[ik,ib])
-            outfile2.write("%14.5f" % (eqp[ik,ib]-gwfermi))
+            outfile2.write("%14.5f" % (eqp[ik,ib]))
             outfile3.write("%14.5f" % (imeqp[ik,ib]))
 
         outfile2.write("\n")

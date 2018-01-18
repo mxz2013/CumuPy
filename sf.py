@@ -131,13 +131,6 @@ if isfile("invar.in"):
     	enmax = 0.0 
     print("the minimum and maxmum frequency will be calculated in cumulant :",enmin, enmax)
     
-    if 'penergy' in invar: # 
-    	penergy = int(invar['penergy'])
-    else:
-    	penergy = 0
-
-    print("photon energy used in cross section and extrinsic calculation: ",
-          penergy)
     if 'wps' in invar:  # data from Josh used for surface plasmon calculation.  
         wps = int(invar['wps']);
     else:
@@ -214,14 +207,14 @@ if isfile("invar.in"):
         core = float(invar['core_only']) #different with core
     else:
         core = 0
-    if 'Fermi_temp' in invar: # Temperature in Fermi-function Kelvin 
-        Temp = float(invar['Fermi_temp'])
-    else:
-        Temp = 300.0
-    if 'Gaussian' in invar: #lorentzian broadening of all cumulant A(\omega)
-        gbro = float(invar['Gaussian'])
-    else:
-        gbro = 0.1
+    #if 'Fermi_temp' in invar: # Temperature in Fermi-function Kelvin 
+    #    Temp = float(invar['Fermi_temp'])
+    #else:
+    #    Temp = 300.0
+    #if 'Gaussian' in invar: #lorentzian broadening of all cumulant A(\omega)
+    #    gbro = float(invar['Gaussian'])
+    #else:
+    #    gbro = 0.1
     if 'npoles' in invar: #lorentzian broadening of all cumulant A(\omega)
         npoles = int(invar['npoles'])
     else:
@@ -248,8 +241,6 @@ else :
     print ("Invar file not found (invar.in). Impossible to continue.")
     sys.exit(1)
 print ("Reading invar done.")
-print(" "+"===="+" Input variables "+"====")
-
 
 #npoles = int(150)  #for sampling Im\Sigma lesser to calculate crc_unocc
 nband = bdgw_max - bdgw_min + 1
@@ -377,9 +368,9 @@ if abinit_eqp == 1:
          """)
     eqp_abinit = read_eqp_abinit()
     eqp = eqp_abinit
-    with open("eqp_abinit.dat", 'w') as f:
-        writer = csv.writer(f, delimiter = '\t')
-        writer.writerows(zip (eqp-gwfermi))
+    #with open("eqp_abinit.dat", 'w') as f:
+    #    writer = csv.writer(f, delimiter = '\t')
+    #    writer.writerows(zip (eqp-gwfermi))
 else:
 
     print("""

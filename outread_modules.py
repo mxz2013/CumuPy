@@ -50,9 +50,9 @@ def read_hartree():
         print("Done.")
         hartree = np.array(hartree);
 
-    elif isfile("E_lda.dat") and isfile("Vxc.dat"):
+    elif isfile("Elda.dat") and isfile("Vxc.dat"):
         print(" Reading files E_lda.dat and Vxc.dat... ")
-        Eldafile = open("E_lda.dat");
+        Eldafile = open("Elda.dat");
         Vxcfile = open("Vxc.dat");
         elda = [];
         vxc = [];
@@ -90,9 +90,9 @@ def read_hf():
 
 def read_lda():
     import numpy as np;
-    if isfile("E_lda.dat"):
-        print(" Reading file E_lda.dat... ")
-        ldafile = open("E_lda.dat");
+    if isfile("Elda.dat"):
+        print(" Reading file Elda.dat... ")
+        ldafile = open("Elda.dat");
         Elda = [];
         for line in ldafile.readlines():
             Elda.append(map(float,line.split()));
@@ -101,7 +101,7 @@ def read_lda():
         Elda = np.array(Elda);
 
     else:
-        print ("ERROR: E_lda.dat not found!")
+        print ("ERROR: Elda.dat not found!")
         sys.exit(1)
     return Elda
 def read_pjt_new(nkpt,nband,bdgw_min,nspin):
