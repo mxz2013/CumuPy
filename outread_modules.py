@@ -86,6 +86,7 @@ def read_hf():
         print("Done.")
         Sig_x = np.array(Sig_x);
     else:
+        Sig_x = 0.0
         print("""
               WARNING: No Sigx.dat provided! Thus RC of Josh and TC original
               will not calculated!!

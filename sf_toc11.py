@@ -137,8 +137,8 @@ def calc_ShiftImSig(en, ims_tmp, ikeff, ibeff ,Elda_kb, xfermi, Eplasmon,
 
         with open("ShiftIms_rc-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat", 'w') as f:
             writer = csv.writer(f, delimiter = '\t')
-            writer.writerow(['# w','# ImSigma(w-eqp)','##ImSigma'])
-            writer.writerows(zip (NewEn_0, ShiftIms_0,interpims(NewEn_0)))
+            writer.writerow(['# w','# ImSigma(w-eqp)'])
+            writer.writerows(zip (NewEn_0, ShiftIms_0))
 
     return NewEn_tmp, ShiftIms_tmp
 
@@ -317,6 +317,130 @@ def calc_toc11(wps1,wps2,gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsiz
     return interp_en-gwfermi, toc_tot,spftot_pjt1, spftot_pjt2, spftot_pjt3,sumkbp
 ###############################################################################
 ## below we implent the TOC original formula
+
+def calc_ShiftImSig0(en, ims_tmp, ikeff, ibeff ,Elda_kb, xfermi, Eplasmon,
+                    metal_valence, invar_den, Rx, Ry, wps1, wps2, extrinsic, rc_toc = 0 ):
+    """
+    This module calculates Imsigma(w+e) which can be as input
+    of the integration over omega, i.e., calc_integ_Imsig
+    """
+    import csv
+    print ("SKY DEBUG en original:", en[0], en[-1],len(en))  
+    ene=np.insert(en,0,-1000.0) 
+    en2=np.insert(ene,len(ene), 1000.0)
+    print ("SKY DEBUG en extended:", en2[0], en2[-1], len(en2))
+    if rc_toc == 0: ## toc calculation 
+        if metal_valence ==1:
+            print("""
+              WARNING: You are using TOC to calculate valence
+              band of metal !! Calculate core states 
+              together with the valence is not recommended. 
+              """)
+
+        NewEn_min = -6*Eplasmon #+ Elda_kb  #default calculate 10 plasmon
+        NewEn_min  = int(NewEn_min)
+        
+        if metal_valence == 1:
+            NewEn_max = -Elda_kb 
+        else:
+            NewEn_max = 1.0 #1*Eplasmon #+ Elda_kb #1*(Eplasmon+abs(xfermi))
+        print ("SKYDEBUG NewEn",  NewEn_min, NewEn_max)
+
+        ims_tmp=np.insert(ims_tmp,0,ims_tmp[0])
+        ims_tmp=np.insert(ims_tmp,len(ims_tmp),ims_tmp[-1])
+
+        interpims = interp1d(en2, ims_tmp, kind = 'linear', axis
+                                 = -1)
+
+        imeqp_kb = interpims(Elda_kb)
+        print("ImSigma(eqp)", imeqp_kb)
+        newdx = invar_den  # must be chosen carefully so that 0 is
+        # included in NewEn if metal_valence is on. invar_den can be 0.1*0.5^n, or 0.2. 
+        NewEn_0 = np.arange(NewEn_min, NewEn_max, newdx)
+        NewEn_tmp = [x for x in NewEn_0 if abs(x) > 1e-6]
+        NewEn_tmp = np.asarray(NewEn_tmp)
+        NewEn_size = len(NewEn_tmp)
+        if NewEn_tmp[-1]>=0 and NewEn_size == len(NewEn_0) and metal_valence == 1:
+            print(""" ERROR: Zero is not in the intergration of
+                  ImSigma(w) but your band crosess Fermi. Check your
+                  invar_den.
+                  """)
+            sys.exit(1)
+        ShiftEn = NewEn_tmp + Elda_kb 
+        ShiftEn_0 = NewEn_0 + Elda_kb 
+        if extrinsic == 0:              # SKY RRRR
+          #  print("SKYDEBUG, wps", wps1, wps2)
+            ShiftIms_tmp = interpims(ShiftEn)+(wps1*NewEn_tmp+wps2)*interpims(ShiftEn*np.sqrt(2))
+            ShiftIms_0 = interpims(ShiftEn_0)+(wps1*NewEn_0+wps2)*interpims(ShiftEn_0*np.sqrt(2))
+        else: 
+            #print("SKYDEBUG, ShiftEn", ShiftEn[0], ShiftEn[-1],
+            #      ShiftEn[0]*np.sqrt(2), ShiftEn[-1]*np.sqrt(2))
+            interpR = interp1d(Rx, Ry, kind = 'linear', axis=-1) # SKY RRRR
+            print("SKYDEBUG, RX", Rx[0], Rx[-1])
+            ShiftIms_tmp=interpims(ShiftEn)*interpR(NewEn_tmp)+(wps1*NewEn_tmp+wps2)*interpims(ShiftEn*np.sqrt(2))*interpR(NewEn_tmp*np.sqrt(2))
+            ShiftIms_0=interpims(ShiftEn_0)*interpR(NewEn_0)+(wps1*NewEn_0+wps2)*interpims(ShiftEn_0*np.sqrt(2))*interpR(NewEn_0*np.sqrt(2))
+            with open("R_toc-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat", 'w') as f:
+                writer = csv.writer(f, delimiter = '\t')
+                writer.writerows(zip (NewEn_tmp, ShiftIms_tmp,interpR(NewEn_tmp),interpR(ShiftEn)))
+
+        with open("ShiftIms_toc-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat", 'w') as f:
+            writer = csv.writer(f, delimiter = '\t')
+            writer.writerow(['# w','# ImSigma(w-eqp)','##ImSigma'])
+            writer.writerows(zip (NewEn_0, ShiftIms_0,interpims(NewEn_0)))
+
+    if rc_toc == 1: ## rc calculation 
+
+        NewEn_min =  -6*Eplasmon # - Elda_kb  
+        NewEn_min  = int(NewEn_min)
+        NewEn_max = 6*Eplasmon #  
+        #NewEn_max = 2.0  # TOC value  
+        #NewEn_max = 5.0  #   
+        #NewEn_max = 10.0  #   
+        #NewEn_max = 15.0  #   
+        #NewEn_max = 20.0  #   
+        #NewEn_max = 30.0  #   
+        print ("SKYDEBUG NewEn",  NewEn_min, NewEn_max)
+
+        ims_tmp=np.insert(ims_tmp,0,ims_tmp[0])
+        ims_tmp=np.insert(ims_tmp,len(ims_tmp),ims_tmp[-1])
+
+        interpims = interp1d(en2, ims_tmp, kind = 'linear', axis
+                                 = -1)
+
+        imeqp_kb = interpims(Elda_kb)
+        print("ImSigma(eqp)", imeqp_kb)
+        newdx = invar_den  # must be chosen carefully so that 0 is
+        # included in NewEn if metal_valence is on. invar_den can be 0.1*0.5^n, or 0.2. 
+        NewEn_0 = np.arange(NewEn_min, NewEn_max, newdx)
+        NewEn_tmp = [x for x in NewEn_0 if abs(x) > 1e-6]
+        NewEn_tmp = np.asarray(NewEn_tmp)
+        NewEn_size = len(NewEn_tmp)
+        if NewEn_tmp[-1]>=0 and NewEn_size == len(NewEn_0):
+            print(""" ERROR: Zero is not in the intergration of
+                  ImSigma(w) but your band crosess Fermi. Check your
+                  invar_den.
+                  """)
+        ShiftEn = NewEn_tmp + Elda_kb 
+        ShiftEn_0 = NewEn_0 + Elda_kb 
+        if extrinsic == 0:              # SKY RRRR
+          #  print("SKYDEBUG, wps", wps1, wps2)
+            ShiftIms_tmp = interpims(ShiftEn)+(wps1*NewEn_tmp+wps2)*interpims(ShiftEn*np.sqrt(2))
+            ShiftIms_0 = interpims(ShiftEn_0)+(wps1*NewEn_0+wps2)*interpims(ShiftEn_0*np.sqrt(2))
+        else: 
+            interpR = interp1d(Rx, Ry, kind = 'linear', axis=-1) # SKY RRRR
+            ShiftIms_tmp=interpims(ShiftEn)*interpR(NewEn_tmp)+(wps1*NewEn_tmp+wps2)*interpims(ShiftEn*np.sqrt(2))*interpR(NewEn_tmp*np.sqrt(2))
+            ShiftIms_0=interpims(ShiftEn_0)*interpR(NewEn_0)+(wps1*NewEn_0+wps2)*interpims(ShiftEn_0*np.sqrt(2))*interpR(NewEn_0*np.sqrt(2))
+            with open("R_rc-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat", 'w') as f:
+                writer = csv.writer(f, delimiter = '\t')
+                writer.writerows(zip (NewEn_tmp, ShiftIms_tmp,interpR(NewEn_tmp),interpR(ShiftEn)))
+
+        with open("ShiftIms_rc-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat", 'w') as f:
+            writer = csv.writer(f, delimiter = '\t')
+            writer.writerow(['# w','# ImSigma(w-eqp)'])
+            writer.writerows(zip (NewEn_0, ShiftIms_0))
+
+    return NewEn_0, ShiftIms_0
+
 def calc_FFT0(ehf_kb, gt_list, fftsize,dtfft, enmin, newen_toc, denfft, invar_eta):
 
     """
@@ -346,7 +470,7 @@ def calc_FFT0(ehf_kb, gt_list, fftsize,dtfft, enmin, newen_toc, denfft, invar_et
     wlist = np.arange(enmin,newen_toc[-1]+denfft, denfft)
     gwlist = []
     for w in wlist:
-        Area2 = s_go/(w-efh_kb-s_freq-eta) # here eqp=ehf 
+        Area2 = s_go/(w-ehf_kb-s_freq-eta) # here eqp=ehf 
         c = np.trapz(Area2, dx = denfft)
         cwIm = 1./np.pi*c.imag
         gwlist.append(0.5/np.pi*cwIm)
@@ -418,13 +542,13 @@ def calc_toc(ehf,wps1,wps2,gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTts
             ims_tmp=ims[ik,ib] 
             if Elda_kb - xfermi <= tol_fermi:
 
-                NewEn, ShiftIms = calc_ShiftImSig(en, ims_tmp, ikeff, ibeff,
+                NewEn, ShiftIms = calc_ShiftImSig0(en, ims_tmp, ikeff, ibeff,
                                                   Elda_kb, xfermi, Eplasmon,
                                                   metal_valence, invar_den, Rx,
                                                   Ry,wps1, wps2, extrinsic, rc_toc = 0 )
 
                 gt_list = calc_integ_Imsig0(NewEn, ShiftIms, trange ) 
-                w_list, gw_list = calc_FFT(ehf_kb,gt_list, fftsize,dtfft, enmin,
+                w_list, gw_list = calc_FFT0(ehf_kb,gt_list, fftsize,dtfft, enmin,
                                             newen_toc, denfft, invar_eta)
 
                 interp_toc = interp1d(w_list, gw_list, kind='linear', axis=-1)

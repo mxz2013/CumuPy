@@ -172,7 +172,7 @@ def calc_rc_Josh (ehf,wps1,wps2,gwfermi, lda_fermi, bdrange, bdgw_min, kptrange,
             
             ims_tmp=ims[ik,ib] 
 
-            NewEn, ShiftIms = calc_ShiftImSig(en, ims_tmp, ikeff, ibeff,
+            NewEn, ShiftIms = calc_ShiftImSig0(en, ims_tmp, ikeff, ibeff,
                                               Elda_kb, xfermi, Eplasmon,
                                               metal_valence, invar_den, Rx,
                                               Ry,wps1, wps2, extrinsic, rc_toc = 1)
