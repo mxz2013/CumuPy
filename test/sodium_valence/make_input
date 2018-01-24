@@ -1,0 +1,41 @@
+#!/bin/sh
+
+#grep "<VxcLDA>" -A1 sp.outA | grep -v Band | grep -v "\-\-" | cut -b7-14 >E_lda.dat
+#
+#grep "<VxcLDA>" -A1 sp.outA | grep -v Band | grep -v "\-\-" | cut -b15-22 >Vxc.dat
+#
+#awk 'OFS="\n"{$1=$1}1' wtk >wtk.dat
+
+# This script help to make all required inputs, except the wtk.dat, pjt_s.dat, pjt_p.dat, or pjt_d.dat.
+
+grep "k" -A1002 spo_DS3_SIG |cut -b1-97 >SIG_gw0 # we need only the first 2 bands, remove degenerate bands..
+
+grep "<Vxclda>" -A2 sp.out | grep -v Band | grep -v "\-\-" | cut -b9-17 > tmp
+awk 'NR > 2*2*256 ' tmp > tmp2 # two bands, three sc-cycles, thus we remove the data of the first two cycles
+awk "NR%2==1" tmp2 > h1 
+awk "NR%2==0" tmp2 > h2
+paste -d '' h1 h2 > Elda.dat
+rm tmp tmp2 h1 h2
+
+grep "<Vxclda>" -A2 sp.out | grep -v Band | grep -v "\-\-" | cut -b18-27 > tmp
+awk 'NR > 2*2*256 ' tmp > tmp2 # two bands, three sc-cycles, thus we remove the data of the first two cycles
+awk "NR%2==1" tmp2 > h1 
+awk "NR%2==0" tmp2 > h2
+paste -d '' h1 h2 > Vxc.dat
+rm tmp tmp2 h1 h2
+
+grep "<Vxclda>" -A2 sp.out | grep -v Band | grep -v "\-\-" | cut -b119-125 > tmp
+awk 'NR > 2*2*256 ' tmp > tmp2 # two bands, three sc-cycles, thus we remove the data of the first two cycles.
+awk "NR%2==1" tmp2 > h1 
+awk "NR%2==0" tmp2 > h2
+paste -d '' h1 h2 > eqp_abinit.dat
+rm tmp tmp2 h1 h2
+
+grep "<Vxclda>" -A2 sp.out | grep -v Band | grep -v "\-\-" | cut -b38-46 > hartree
+awk 'NR > 2*2*256 ' hartree > ht # two bands, three sc-cycles, thus we remove the data of the first two cycles.
+awk "NR%2==1" ht > h1 
+awk "NR%2==0" ht > h2
+#
+paste -d '' h1 h2 > hartree.dat
+rm hartree ht h1 h2
+
