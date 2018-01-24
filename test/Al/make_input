@@ -1,0 +1,62 @@
+#!/bin/sh
+
+fermi=8.263322
+#grep "<VxcLDA>" -A8 sp.out | grep -v Band | grep -v "\-\-" | cut -b7-14 >ht
+###
+#grep "<VxcLDA>" -A8 sp.out | grep -v Band | grep -v "\-\-" | cut -b15-22 >Sx
+##
+#awk 'OFS="\n"{$1=$1}1' wtk >wtk.dat
+ 
+#awk 'OFS="\n"{$1=$1}1' wtk > wtk.dat
+grep "k" -A1002 spo_DS3_SIG |cut -b1-182 >SIG
+
+grep "<Vxclda>" -A4 sp.out | grep -v Band | grep -v "\-\-" | cut -b38-46 > hartree
+awk 'NR > 4*2*145 ' hartree > ht
+awk "NR%4==1" ht > h1 
+awk "NR%4==2" ht > h2
+awk "NR%4==3" ht > h3
+awk "NR%4==0" ht > h4
+#awk "NR%8==0" ht > h5
+paste -d '' h1 h2 h3 h4 > hartree.dat
+rm h1 h2 h3 h4 ht hartree 
+##
+#awk "NR%8==1" Sx > s1 
+#awk "NR%8==3" Sx > s2
+#awk "NR%8==5" Sx > s3
+#awk "NR%8==7" Sx > s4
+##awk "NR%5==0" Sx > s5
+##
+#paste -d '' s1 s2 s3 s4  > Vxc.dat
+##
+#rm s1 s2 s4 s3 Sx 
+# the LDA energies
+grep "<Vxclda>" -A4 sp.out | grep -v Band | grep -v "\-\-" | cut -b9-16 > hartree
+awk 'NR > 4*2*145 ' hartree > ht
+awk "NR%4==1" ht > h1 
+awk "NR%4==2" ht > h2
+awk "NR%4==3" ht > h3
+awk "NR%4==0" ht > h4
+#awk "NR%8==0" ht > h5
+paste -d '' h1 h2 h3 h4 > E_lda.dat
+rm h1 h2 h3 h4 ht hartree 
+#
+# the Vxc energies
+grep "<Vxclda>" -A4 sp.out | grep -v Band | grep -v "\-\-" | cut -b19-27 > hartree
+awk 'NR > 4*2*145 ' hartree > ht
+awk "NR%4==1" ht > h1 
+awk "NR%4==2" ht > h2
+awk "NR%4==3" ht > h3
+awk "NR%4==0" ht > h4
+#awk "NR%8==0" ht > h5
+paste -d '' h1 h2 h3 h4 > Vxc.dat
+rm h1 h2 h3 h4 ht hartree 
+
+grep "<Vxclda>" -A4 sp.out | grep -v Band | grep -v "\-\-" | cut -b109-117 > hartree
+#awk 'NR > 4*2*145 ' hartree | awk "{print \$1-$fermi}" > ht
+awk 'NR > 4*2*145 ' hartree > ht
+awk "NR%4==1" ht > h1 
+awk "NR%4==2" ht > h2
+awk "NR%4==3" ht > h3
+awk "NR%4==0" ht > h4
+#awk "NR%8==0" ht > h5
+paste  h1  h2  h3  h4 > eqp_abinit.dat

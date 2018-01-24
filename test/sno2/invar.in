@@ -8,8 +8,8 @@ out_gw_DS4_SIG     # sigmafile
 1          # maxkpt
 9       # bdgw_min
 46       # bdgw_max
-29           # minband
-34           # maxband
+9           # minband
+9           # maxband
 -80      # enmin
 30        # enmax
 6.881    # gwfermi 
