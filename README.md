@@ -1,4 +1,4 @@
-# Cumypy2.7
+# CumuPy2.7
 A python code to compute the spectral functions in the cumulant expansion approximations.
 
 The code is written based on the cumulant code of Dr. Matteo Guzzo.
