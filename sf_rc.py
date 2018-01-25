@@ -7,7 +7,6 @@ Hartree Fock enery is also needed.
 """
 from __future__ import print_function
 import numpy as np;
-from multipole import *
 from sf_toc11 import *
 import matplotlib.pylab as plt;
 from scipy.interpolate import interp1d
