@@ -1,0 +1,3 @@
+include LIC*.txt
+recursive-include test *
+recursive-include tools *
