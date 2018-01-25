@@ -37,7 +37,7 @@ awk "NR%4==2" ht > h2
 awk "NR%4==3" ht > h3
 awk "NR%4==0" ht > h4
 #awk "NR%8==0" ht > h5
-paste -d '' h1 h2 h3 h4 > E_lda.dat
+paste -d '' h1 h2 h3 h4 > Elda.dat
 rm h1 h2 h3 h4 ht hartree 
 #
 # the Vxc energies

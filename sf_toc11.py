@@ -11,7 +11,6 @@ cumulant formula in [my prb]
 """
 from __future__ import print_function
 import numpy as np;
-from multipole import *
 import matplotlib.pylab as plt;
 from scipy.interpolate import interp1d
 import sys

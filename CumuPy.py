@@ -2,7 +2,6 @@
 from __future__ import print_function
 #from sf_modules_tmp import *
 from outread_modules import *
-from sf_crc_modules import *
 import numpy as np;
 import matplotlib.pylab as plt;
 plt.figure(1)
