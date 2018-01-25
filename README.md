@@ -3,7 +3,9 @@ A python code to compute the spectral functions in the cumulant expansion approx
 
 The code is written based on the cumulant code of Dr. Matteo Guzzo.
 
-It is written in python 2.7.12. The required modules are numpy, scipy, matplotlib, pyfftw.  
+It is written in python 2.7.12. The required modules are numpy, scipy, matplotlib, pyfftw. 
+
+The main module is "sf.py" which can be excute by python sf.py >log & , such that the output information will be saved in the log file. The "outread_modules.py" reads all the input files, "calc_qp.py", "calc_gw.py", "sf_toc11.py", and "sf_rc.py" are modules for the calcualtions of the spectra of QP, GW, TC, and RC, respectively.
 
 This code is written according to abinit GW output. Thus all the inputs in the test folder are from abinit calculation with some post process. To use the code, you need to provide the following inputs, i.e.,
 
