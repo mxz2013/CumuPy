@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 from __future__ import print_function
-#from sf_modules_tmp import *
 from outread_modules import *
-from sf_crc_modules import *
 import numpy as np;
 import matplotlib.pylab as plt;
 plt.figure(1)
@@ -30,7 +28,7 @@ if isfile("invar.in"):
         sigfilename = 'default_SIG';
 
     print ("name of the sigma file:",  sigfilename   )
-    if 'outname' in invar:  ## using wtk.dat or not 
+    if 'outname' in invar:  ##  
         outname = str(invar['outname']);
     else:
         outname = 'Spfunctions';
