@@ -14,7 +14,7 @@ are modules for the calcualtions of the spectra of QP, GW, TC, and RC, respectiv
 This code is written according to abinit GW output. Thus all the inputs in the test folder are from abinit calculation 
 with some post process. To use the code, you need to provide the following inputs, i.e.,
 
-1. ``SIG`` file, which contains frequency, $Re\Sigma(\omega)$, $Im\Sigma(\omega)$, and GW spectral funcitons for each k point and band. 
+1. ``SIG`` file, which contains frequency, :math:`Re\Sigma(\omega)`, :math:`Im\Sigma(\omega)`, and GW spectral funcitons for each k point and band. 
    Examples can be found in the test folder. If you have self-energy results from other codes, you'd better change them into the abinit 
    format. Otherwise you might have some reading errors.
 
