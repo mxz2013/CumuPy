@@ -18,6 +18,9 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
+# Get the license from the LICENSE file
+with open(path.join(here, 'LICENSE.txt'), encoding='utf-8') as f:
+    license = f.read()
 # Arguments marked as "Required" below must be included for upload to PyPI.
 # Fields marked as "Optional" may be commented out.
 
@@ -106,17 +109,18 @@ setup(
     # Note that this is a string of words separated by whitespace, not a list.
     keywords='spectral function photoemission cumulant spectroscopy',  # Optional
 
+    license = license,
     # You can just specify package directories manually here if your project is
     # simple. Or you can use find_packages().
-    py_modules = [
-	'CumuPy', 
-	'calc_qp',
-	'outread_modules',
-	'sf_modules_spin',
-	'sf_toc11',
-	'sf_gw',
-	'sf_rc',
-	],
+#    py_modules = [
+#	'CumuPy', 
+#	'calc_qp',
+#	'outread_modules',
+#	'sf_modules_spin',
+#	'sf_toc11',
+#	'sf_gw',
+#	'sf_rc',
+#	],
     #
     # Alternatively, if you just want to distribute a single Python file, use
     # the `py_modules` argument instead as follows, which will expect a file
@@ -157,8 +161,20 @@ setup(
     #
     # If using Python 2.6 or earlier, then these have to be included in
     # MANIFEST.in as well.
-    include_package_data=True,
-
+    #include_package_data=True,
+    #packages=find_packages(exclude=('tools')),
+    #packages=['CumuPy'],
+    packages=find_packages(),
+    #package_dir={'cumupy': 'CumuPy'},
+    package_data={  # Optional
+        '': ['*rst','*.dat'],
+    },
+    data_files=[
+	('/CumuPy/test/Al', ['CumuPy/test/Al/wtk.dat']),
+	('/CumuPy/test/Al', ['CumuPy/test/Al/README.rst']),
+	('/CumuPy/test/Al', ['CumuPy/test/Al/sp.out']),
+	('/CumuPy/test/Al', ['CumuPy/test/Al/spo_DS3_SIG'])
+	],  # Optional
     # Although 'package_data' is the preferred approach, in some case you may
     # need to place data files outside of your packages. See:
     # http://docs.python.org/3.4/distutils/setupscript.html#installing-additional-files
