@@ -269,7 +269,7 @@ def calc_toc11(wps1,wps2,gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsiz
                 interp_toc = interp1d(w_list, gw_list, kind='linear', axis=-1)
                 interp_en = newen_toc
                 spfkb = interp_toc(interp_en)
-                #print("SKY DEBUG cs", cs1, cs2)
+                print("SKY DEBUG pjt1, pjt2 ", pjt1[ik,ib], pjt2[ik,ib])
                 spfkb_pjt1 = spfkb*pjt1[ik,ib]*cs1 
                 spfkb_pjt2 = spfkb*pjt2[ik,ib]*cs2 
                 spfkb_pjt3 = spfkb*pjt3[ik,ib]*cs3 
