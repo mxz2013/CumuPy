@@ -18,7 +18,7 @@ from os.path import isfile, join, isdir
 from os import getcwd, pardir, mkdir, chdir
 
 
-def calc_ShiftImSig(en, ims_tmp, ikeff, ibeff ,Elda_kb, xfermi, Eplasmon,
+def calc_ShiftImSig( en, ims_tmp, ikeff, ibeff ,Elda_kb, xfermi, Eplasmon,
                     metal_valence, invar_den, Rx, Ry, wps1, wps2, extrinsic, rc_toc = 0 ):
     """
     This module calculates Imsigma(w+e) which can be as input
@@ -41,9 +41,9 @@ def calc_ShiftImSig(en, ims_tmp, ikeff, ibeff ,Elda_kb, xfermi, Eplasmon,
         NewEn_min  = int(NewEn_min)
         
         if metal_valence == 1:
-            NewEn_max = -Elda_kb 
+            NewEn_max = -Elda_kb+xfermi 
         else:
-            NewEn_max = 1*Eplasmon #+ Elda_kb #1*(Eplasmon+abs(xfermi))
+            NewEn_max = 1*Eplasmon+xfermi #+ Elda_kb #1*(Eplasmon+abs(xfermi))
         print ("SKYDEBUG NewEn",  NewEn_min, NewEn_max)
 
         ims_tmp=np.insert(ims_tmp,0,ims_tmp[0])
