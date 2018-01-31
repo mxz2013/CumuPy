@@ -28,7 +28,7 @@ if isfile("invar.in"):
         sigfilename = 'default_SIG';
 
     print ("name of the sigma file:",  sigfilename   )
-    if 'outname' in invar:  ##  
+    if 'outname' in invar:  ## using wtk.dat or not 
         outname = str(invar['outname']);
     else:
         outname = 'Spfunctions';
@@ -291,7 +291,6 @@ else:
     wps2 = 0.
 
 if flag_pjt == 1:
-    
     pjt1, pjt2, pjt3 =read_pjt_new(nkpt,nband,bdgw_min,nspin) #  read_pjt()
     #pjt1, pjt2, pjt3 =read_pjt_new(145,8,1,nspin) # modified by SKY on 26
     #December 2018 for calculating aluminum core 

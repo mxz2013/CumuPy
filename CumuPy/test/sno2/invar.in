@@ -1,7 +1,9 @@
 out_gw_DS4_SIG     # sigmafile
 1       # scgw
 0     # abinit_eqp
+
 1    # flag_wtk
+
 0   # metal_valence
 1   # Eplasmon
 28    # nkpt
