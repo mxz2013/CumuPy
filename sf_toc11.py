@@ -77,11 +77,15 @@ def calc_ShiftImSig( en, ims_tmp, ikeff, ibeff ,Elda_kb, xfermi, Eplasmon,
             #      ShiftEn[0]*np.sqrt(2), ShiftEn[-1]*np.sqrt(2))
             interpR = interp1d(Rx, Ry, kind = 'linear', axis=-1) # SKY RRRR
             print("SKYDEBUG, RX", Rx[0], Rx[-1])
-            ShiftIms_tmp=interpims(ShiftEn)*interpR(NewEn_tmp)+(wps1*NewEn_tmp+wps2)*interpims(ShiftEn*np.sqrt(2))*interpR(NewEn_tmp*np.sqrt(2))
-            ShiftIms_0=interpims(ShiftEn_0)*interpR(NewEn_0)+(wps1*NewEn_0+wps2)*interpims(ShiftEn_0*np.sqrt(2))*interpR(NewEn_0*np.sqrt(2))
+
+            ShiftIms_tmp=interpims(ShiftEn)*interpR(NewEn_tmp)+(wps1*NewEn_tmp+wps2)*interpims(NewEn_tmp*np.sqrt(2)+Elda_kb)*interpR(NewEn_tmp*np.sqrt(2))
+            ShiftIms_0=interpims(ShiftEn_0)*interpR(NewEn_0)+(wps1*NewEn_0+wps2)*interpims(NewEn_0*np.sqrt(2)+Elda_kb)*interpR(NewEn_0*np.sqrt(2))
+            #ShiftIms_tmp=interpims(ShiftEn)*interpR(NewEn_tmp)+(wps1*NewEn_tmp+wps2)*interpims(ShiftEn*np.sqrt(2))*interpR(NewEn_tmp*np.sqrt(2))
+            #ShiftIms_0=interpims(ShiftEn_0)*interpR(NewEn_0)+(wps1*NewEn_0+wps2)*interpims(ShiftEn_0*np.sqrt(2))*interpR(NewEn_0*np.sqrt(2))
             with open("R_toc-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat", 'w') as f:
                 writer = csv.writer(f, delimiter = '\t')
-                writer.writerows(zip (NewEn_tmp, ShiftIms_tmp,interpR(NewEn_tmp),interpR(ShiftEn)))
+                writer.writerows(zip (NewEn_tmp,
+                                      ShiftIms_tmp,interpR(NewEn_tmp),interpims(NewEn_tmp*np.sqrt(2)+Elda_kb)))
 
         with open("ShiftIms_toc-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat", 'w') as f:
             writer = csv.writer(f, delimiter = '\t')
@@ -128,11 +132,16 @@ def calc_ShiftImSig( en, ims_tmp, ikeff, ibeff ,Elda_kb, xfermi, Eplasmon,
             ShiftIms_0 = interpims(ShiftEn_0)+(wps1*NewEn_0+wps2)*interpims(ShiftEn_0*np.sqrt(2))
         else: 
             interpR = interp1d(Rx, Ry, kind = 'linear', axis=-1) # SKY RRRR
-            ShiftIms_tmp=interpims(ShiftEn)*interpR(NewEn_tmp)+(wps1*NewEn_tmp+wps2)*interpims(ShiftEn*np.sqrt(2))*interpR(NewEn_tmp*np.sqrt(2))
-            ShiftIms_0=interpims(ShiftEn_0)*interpR(NewEn_0)+(wps1*NewEn_0+wps2)*interpims(ShiftEn_0*np.sqrt(2))*interpR(NewEn_0*np.sqrt(2))
+
+            ShiftIms_tmp=interpims(ShiftEn)*interpR(NewEn_tmp)+(wps1*NewEn_tmp+wps2)*interpims(NewEn_tmp*np.sqrt(2)+Elda_kb)*interpR(NewEn_tmp*np.sqrt(2))
+            ShiftIms_0=interpims(ShiftEn_0)*interpR(NewEn_0)+(wps1*NewEn_0+wps2)*interpims(NewEn_0*np.sqrt(2)+Elda_kb)*interpR(NewEn_0*np.sqrt(2))
+            #ShiftIms_tmp=interpims(ShiftEn)*interpR(NewEn_tmp)+(wps1*NewEn_tmp+wps2)*interpims(ShiftEn*np.sqrt(2))*interpR(NewEn_tmp*np.sqrt(2))
+            #ShiftIms_0=interpims(ShiftEn_0)*interpR(NewEn_0)+(wps1*NewEn_0+wps2)*interpims(ShiftEn_0*np.sqrt(2))*interpR(NewEn_0*np.sqrt(2))
             with open("R_rc-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat", 'w') as f:
                 writer = csv.writer(f, delimiter = '\t')
-                writer.writerows(zip (NewEn_tmp, ShiftIms_tmp,interpR(NewEn_tmp),interpR(ShiftEn)))
+                writer.writerows(zip (NewEn_tmp,
+                                      ShiftIms_tmp,interpR(NewEn_tmp),
+                                      interpims(NewEn_tmp*np.sqrt(2)+Elda_kb)))
 
         with open("ShiftIms_rc-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat", 'w') as f:
             writer = csv.writer(f, delimiter = '\t')
