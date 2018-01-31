@@ -279,11 +279,17 @@ def calc_toc11(wps1,wps2,gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsiz
                 interp_toc = interp1d(w_list, gw_list, kind='linear', axis=-1)
                 interp_en = newen_toc
                 spfkb = interp_toc(interp_en)
-                print("SKY DEBUG pjt1, pjt2 ", pjt1[ik,ibeff-1],
-                      pjt2[ik,ibeff-1])
-                spfkb_pjt1 = spfkb*pjt1[ik,ibeff-1]*cs1 
-                spfkb_pjt2 = spfkb*pjt2[ik,ibeff-1]*cs2 
-                spfkb_pjt3 = spfkb*pjt3[ik,ibeff-1]*cs3 
+#<<<<<<< HEAD:sf_toc11.py
+#                print("SKY DEBUG pjt1, pjt2 ", pjt1[ik,ibeff-1],
+#                      pjt2[ik,ibeff-1])
+#                spfkb_pjt1 = spfkb*pjt1[ik,ibeff-1]*cs1 
+#                spfkb_pjt2 = spfkb*pjt2[ik,ibeff-1]*cs2 
+#                spfkb_pjt3 = spfkb*pjt3[ik,ibeff-1]*cs3 
+#=======
+                print("SKY DEBUG pjt1, pjt2 ", pjt1[ik,ib], pjt2[ik,ib])
+                spfkb_pjt1 = spfkb*pjt1[ik,ib]*cs1 
+                spfkb_pjt2 = spfkb*pjt2[ik,ib]*cs2 
+                spfkb_pjt3 = spfkb*pjt3[ik,ib]*cs3 
                 spfkb_spd = spfkb_pjt1+spfkb_pjt2+spfkb_pjt3
                 toc_tot += spfkb*wtk[ik]
                 spftot_pjt1 += spfkb*pjt1[ik,ibeff-1]*wtk[ik]*cs1

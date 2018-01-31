@@ -50,7 +50,7 @@ def read_hartree():
         hartree = np.array(hartree);
 
     elif isfile("Elda.dat") and isfile("Vxc.dat"):
-        print(" Reading files E_lda.dat and Vxc.dat... ")
+        print(" Reading files Elda.dat and Vxc.dat... ")
         Eldafile = open("Elda.dat");
         Vxcfile = open("Vxc.dat");
         elda = [];
@@ -66,7 +66,7 @@ def read_hartree():
         vxc = np.array(vxc);
         hartree = elda - vxc
     else:
-        print ("ERROR: E_lda.dat not found!")
+        print ("ERROR: Elda.dat not found!")
         sys.exit(1)
     
     #return hartree, hartree_ks

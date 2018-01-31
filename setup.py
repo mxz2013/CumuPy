@@ -15,9 +15,12 @@ from os import path
 here = path.abspath(path.dirname(__file__))
 
 # Get the long description from the README file
-with open(path.join(here, 'README.md'), encoding='utf-8') as f:
+with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
+# Get the license from the LICENSE file
+with open(path.join(here, 'LICENSE.txt'), encoding='utf-8') as f:
+    license = f.read()
 # Arguments marked as "Required" below must be included for upload to PyPI.
 # Fields marked as "Optional" may be commented out.
 
@@ -106,8 +109,18 @@ setup(
     # Note that this is a string of words separated by whitespace, not a list.
     keywords='spectral function photoemission cumulant spectroscopy',  # Optional
 
+    license = license,
     # You can just specify package directories manually here if your project is
     # simple. Or you can use find_packages().
+#    py_modules = [
+#	'CumuPy', 
+#	'calc_qp',
+#	'outread_modules',
+#	'sf_modules_spin',
+#	'sf_toc11',
+#	'sf_gw',
+#	'sf_rc',
+#	],
     #
     # Alternatively, if you just want to distribute a single Python file, use
     # the `py_modules` argument instead as follows, which will expect a file
@@ -115,7 +128,7 @@ setup(
     #
     #   py_modules=["my_module"],
     #
-    packages=find_packages(exclude=['contrib', 'docs', 'tests']),  # Required
+    #packages=find_packages(exclude=['contrib', 'docs', 'tests']),  # Required
 
     # This field lists other packages that your project depends on to run.
     # Any package you put here will be installed by pip when your project is
@@ -123,7 +136,12 @@ setup(
     #
     # For an analysis of "install_requires" vs pip's requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['numpy,scipy,matplotlib,pyfftw'],  # Optional
+    install_requires=[
+	'numpy',
+	'scipy',
+	'matplotlib',
+	'pyfftw>=0.10.4'
+	],  # Optional
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). Users will be able to install these using the "extras"
@@ -143,16 +161,46 @@ setup(
     #
     # If using Python 2.6 or earlier, then these have to be included in
     # MANIFEST.in as well.
+    #include_package_data=True,
+    #packages=find_packages(exclude=('tools')),
+    #packages=['CumuPy'],
+    packages=find_packages(),
+    #package_dir={'cumupy': 'CumuPy'},
     package_data={  # Optional
-        'sample': ['package_data.dat'],
+        '': ['*rst','*.dat'],
     },
-
+    data_files=[
+	('/CumuPy/test/Al', ['CumuPy/test/Al/wtk.dat']),
+	('/CumuPy/test/Al', ['CumuPy/test/Al/README.rst']),
+	('/CumuPy/test/Al', ['CumuPy/test/Al/sp.out']),
+	('/CumuPy/test/Al', ['CumuPy/test/Al/spo_DS3_SIG']),
+	('/CumuPy/test/Al', ['CumuPy/test/Al/cs_1100.0.dat']),
+	('/CumuPy/test/Al', ['CumuPy/test/Al/invar.in']),
+	('/CumuPy/test/Al', ['CumuPy/test/Al/make_input']),
+	('/CumuPy/test/Al', ['CumuPy/test/Al/pjt_d.dat']),
+	('/CumuPy/test/Al', ['CumuPy/test/Al/pjt_p.dat']),
+	('/CumuPy/test/Al', ['CumuPy/test/Al/pjt_s.dat']),
+	('/CumuPy/test/Al', ['CumuPy/test/Al/R_1100.0.dat']),
+	('/CumuPy/test/Al', ['CumuPy/test/Al/wp_s.dat']),
+	('/CumuPy/test/sodium_valence', ['CumuPy/test/sodium_valence/invar.in']),
+	('/CumuPy/test/sodium_valence', ['CumuPy/test/sodium_valence/make_input']),
+	('/CumuPy/test/sodium_valence', ['CumuPy/test/sodium_valence/README.rst']),
+	('/CumuPy/test/sodium_valence', ['CumuPy/test/sodium_valence/spo_DS3_SIG']),
+	('/CumuPy/test/sodium_valence', ['CumuPy/test/sodium_valence/sp.out']),
+	('/CumuPy/test/sodium_valence', ['CumuPy/test/sodium_valence/wtk.dat']),
+	('/CumuPy/test/sno2', ['CumuPy/test/sno2/hartree.dat']),
+	('/CumuPy/test/sno2', ['CumuPy/test/sno2/invar.in']),
+	('/CumuPy/test/sno2', ['CumuPy/test/sno2/out_gw_DS4_SIG']),
+	('/CumuPy/test/sno2', ['CumuPy/test/sno2/README.srt']),
+	('/CumuPy/test/sno2', ['CumuPy/test/sno2/sno2gw.out']),
+	('/CumuPy/test/sno2', ['CumuPy/test/sno2/wtk.dat'])
+	],  # Optional
     # Although 'package_data' is the preferred approach, in some case you may
     # need to place data files outside of your packages. See:
     # http://docs.python.org/3.4/distutils/setupscript.html#installing-additional-files
     #
     # In this case, 'data_file' will be installed into '<sys.prefix>/my_data'
-    data_files=[('my_data', ['data/data_file'])],  # Optional
+    # data_files=[('my_data', ['data/data_file'])],  # Optional
 
     # To provide executable scripts, use entry points in preference to the
     # "scripts" keyword. Entry points provide cross-platform support and allow
@@ -161,9 +209,9 @@ setup(
     #
     # For example, the following would provide a command called `sample` which
     # executes the function `main` from this package when invoked:
-    entry_points={  # Optional
-        'console_scripts': [
-            'sample=sample:main',
-        ],
-    },
+    #entry_points={  # Optional
+    #    'console_scripts': [
+    #        'sample=sample:main',
+    #    ],
+    #},
 )
