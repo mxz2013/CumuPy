@@ -12,7 +12,7 @@ SPF_ext_test # outname
 1          # maxkpt
 145     # nkpt
 1           # minband
-3           # maxband
+1           # maxband
 1       # bdgw_min
 4       # bdgw_max
 -60      # enmin
