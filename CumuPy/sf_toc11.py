@@ -19,7 +19,8 @@ from os import getcwd, pardir, mkdir, chdir
 
 
 def calc_ShiftImSig(en, ims_tmp, ikeff, ibeff ,Elda_kb, xfermi, Eplasmon,
-                    metal_valence, invar_den, Rx, Ry, wps1, wps2, extrinsic, rc_toc = 0 ):
+                    metal_valence, invar_den, Rx, Ry, wps1, wps2, extrinsic, rc_toc  ):
+
     """
     This module calculates Imsigma(w+e) which can be as input
     of the integration over omega, i.e., calc_integ_Imsig
@@ -30,6 +31,9 @@ def calc_ShiftImSig(en, ims_tmp, ikeff, ibeff ,Elda_kb, xfermi, Eplasmon,
     en2=np.insert(ene,len(ene), 1000.0)
     print ("SKY DEBUG en extended:", en2[0], en2[-1], len(en2))
     if rc_toc == 0: ## toc calculation 
+
+        #print ("SKY DEBUG TC calcualtion:", rc_toc )
+
         if metal_valence ==1:
             print("""
               WARNING: You are using TOC to calculate valence
@@ -53,7 +57,9 @@ def calc_ShiftImSig(en, ims_tmp, ikeff, ibeff ,Elda_kb, xfermi, Eplasmon,
                                  = -1)
 
         imeqp_kb = interpims(Elda_kb)
-        print("ImSigma(eqp)", imeqp_kb)
+
+        #print("ImSigma(eqp)", imeqp_kb)
+
         newdx = invar_den  # must be chosen carefully so that 0 is
         # included in NewEn if metal_valence is on. invar_den can be 0.1*0.5^n, or 0.2. 
         NewEn_0 = np.arange(NewEn_min, NewEn_max, newdx)
@@ -66,22 +72,26 @@ def calc_ShiftImSig(en, ims_tmp, ikeff, ibeff ,Elda_kb, xfermi, Eplasmon,
                   invar_den.
                   """)
             sys.exit(1)
+
         ShiftEn = NewEn_tmp + Elda_kb 
         ShiftEn_0 = NewEn_0 + Elda_kb 
+        En_sp = NewEn_tmp*np.sqrt(2)+Elda_kb # surface plasmon energy
+        En_sp0 = NewEn_0*np.sqrt(2)+Elda_kb # surface plasmon energy
         if extrinsic == 0:              # SKY RRRR
           #  print("SKYDEBUG, wps", wps1, wps2)
-            ShiftIms_tmp = interpims(ShiftEn)+(wps1*NewEn_tmp+wps2)*interpims(ShiftEn*np.sqrt(2))
-            ShiftIms_0 = interpims(ShiftEn_0)+(wps1*NewEn_0+wps2)*interpims(ShiftEn_0*np.sqrt(2))
+            ShiftIms_tmp = interpims(ShiftEn)+(wps1*NewEn_tmp+wps2)*interpims(En_sp)
+            ShiftIms_0 = interpims(ShiftEn_0)+(wps1*NewEn_0+wps2)*interpims(En_sp0)
         else: 
-            #print("SKYDEBUG, ShiftEn", ShiftEn[0], ShiftEn[-1],
-            #      ShiftEn[0]*np.sqrt(2), ShiftEn[-1]*np.sqrt(2))
             interpR = interp1d(Rx, Ry, kind = 'linear', axis=-1) # SKY RRRR
-            print("SKYDEBUG, RX", Rx[0], Rx[-1])
-            ShiftIms_tmp=interpims(ShiftEn)*interpR(NewEn_tmp)+(wps1*NewEn_tmp+wps2)*interpims(ShiftEn*np.sqrt(2))*interpR(NewEn_tmp*np.sqrt(2))
-            ShiftIms_0=interpims(ShiftEn_0)*interpR(NewEn_0)+(wps1*NewEn_0+wps2)*interpims(ShiftEn_0*np.sqrt(2))*interpR(NewEn_0*np.sqrt(2))
+            beta_sp = interpims(En_sp)*interpR(NewEn_tmp*np.sqrt(2))
+            beta_sp0 = interpims(En_sp0)*interpR(NewEn_0*np.sqrt(2))
+            ShiftIms_tmp=interpims(ShiftEn)*interpR(NewEn_tmp)+(wps1*NewEn_tmp+wps2)*beta_sp
+            ShiftIms_0=interpims(ShiftEn_0)*interpR(NewEn_0)+(wps1*NewEn_0+wps2)*beta_sp0
             with open("R_toc-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat", 'w') as f:
                 writer = csv.writer(f, delimiter = '\t')
-                writer.writerows(zip (NewEn_tmp, ShiftIms_tmp,interpR(NewEn_tmp),interpR(ShiftEn)))
+                writer.writerows(zip (NewEn_tmp,
+                                      ShiftIms_tmp,interpR(NewEn_tmp),interpims(En_sp),beta_sp))
+
 
         with open("ShiftIms_toc-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat", 'w') as f:
             writer = csv.writer(f, delimiter = '\t')
@@ -92,7 +102,9 @@ def calc_ShiftImSig(en, ims_tmp, ikeff, ibeff ,Elda_kb, xfermi, Eplasmon,
 
         NewEn_min =  -6*Eplasmon # - Elda_kb  
         NewEn_min  = int(NewEn_min)
+
         NewEn_max = 6*Eplasmon #  
+
         #NewEn_max = 2.0  # TOC value  
         #NewEn_max = 5.0  #   
         #NewEn_max = 10.0  #   
@@ -122,17 +134,24 @@ def calc_ShiftImSig(en, ims_tmp, ikeff, ibeff ,Elda_kb, xfermi, Eplasmon,
                   """)
         ShiftEn = NewEn_tmp + Elda_kb 
         ShiftEn_0 = NewEn_0 + Elda_kb 
+
+        En_sp = NewEn_tmp*np.sqrt(2)+Elda_kb # surface plasmon energy
+        En_sp0 = NewEn_0*np.sqrt(2)+Elda_kb # surface plasmon energy
         if extrinsic == 0:              # SKY RRRR
           #  print("SKYDEBUG, wps", wps1, wps2)
-            ShiftIms_tmp = interpims(ShiftEn)+(wps1*NewEn_tmp+wps2)*interpims(ShiftEn*np.sqrt(2))
-            ShiftIms_0 = interpims(ShiftEn_0)+(wps1*NewEn_0+wps2)*interpims(ShiftEn_0*np.sqrt(2))
+            ShiftIms_tmp = interpims(ShiftEn)+(wps1*NewEn_tmp+wps2)*interpims(En_sp)
+            ShiftIms_0 = interpims(ShiftEn_0)+(wps1*NewEn_0+wps2)*interpims(En_sp0)
         else: 
             interpR = interp1d(Rx, Ry, kind = 'linear', axis=-1) # SKY RRRR
-            ShiftIms_tmp=interpims(ShiftEn)*interpR(NewEn_tmp)+(wps1*NewEn_tmp+wps2)*interpims(ShiftEn*np.sqrt(2))*interpR(NewEn_tmp*np.sqrt(2))
-            ShiftIms_0=interpims(ShiftEn_0)*interpR(NewEn_0)+(wps1*NewEn_0+wps2)*interpims(ShiftEn_0*np.sqrt(2))*interpR(NewEn_0*np.sqrt(2))
+            beta_sp = interpims(En_sp)*interpR(NewEn_tmp*np.sqrt(2))
+            beta_sp0 = interpims(En_sp0)*interpR(NewEn_0*np.sqrt(2))
+            ShiftIms_tmp=interpims(ShiftEn)*interpR(NewEn_tmp)+(wps1*NewEn_tmp+wps2)*beta_sp
+            ShiftIms_0=interpims(ShiftEn_0)*interpR(NewEn_0)+(wps1*NewEn_0+wps2)*beta_sp0
             with open("R_rc-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat", 'w') as f:
                 writer = csv.writer(f, delimiter = '\t')
-                writer.writerows(zip (NewEn_tmp, ShiftIms_tmp,interpR(NewEn_tmp),interpR(ShiftEn)))
+                writer.writerows(zip (NewEn_tmp,
+                                      ShiftIms_tmp,interpR(NewEn_tmp),interpims(En_sp),beta_sp))
+
 
         with open("ShiftIms_rc-k"+str("%02d"%(ikeff))+"-b"+str("%02d"%(ibeff))+".dat", 'w') as f:
             writer = csv.writer(f, delimiter = '\t')
@@ -269,12 +288,22 @@ def calc_toc11(wps1,wps2,gwfermi,lda_fermi, bdrange, bdgw_min, kptrange, FFTtsiz
                 interp_toc = interp1d(w_list, gw_list, kind='linear', axis=-1)
                 interp_en = newen_toc
                 spfkb = interp_toc(interp_en)
+
+#<<<<<<< HEAD:sf_toc11.py
+#                print("SKY DEBUG pjt1, pjt2 ", pjt1[ik,ibeff-1],
+#                      pjt2[ik,ibeff-1])
+#                spfkb_pjt1 = spfkb*pjt1[ik,ibeff-1]*cs1 
+#                spfkb_pjt2 = spfkb*pjt2[ik,ibeff-1]*cs2 
+#                spfkb_pjt3 = spfkb*pjt3[ik,ibeff-1]*cs3 
+#=======
+
                 print("SKY DEBUG pjt1, pjt2 ", pjt1[ik,ib], pjt2[ik,ib])
                 spfkb_pjt1 = spfkb*pjt1[ik,ib]*cs1 
                 spfkb_pjt2 = spfkb*pjt2[ik,ib]*cs2 
                 spfkb_pjt3 = spfkb*pjt3[ik,ib]*cs3 
                 spfkb_spd = spfkb_pjt1+spfkb_pjt2+spfkb_pjt3
                 toc_tot += spfkb*wtk[ik]
+
                 spftot_pjt1 += spfkb*pjt1[ik,ib]*wtk[ik]*cs1
                 spftot_pjt2 += spfkb*pjt2[ik,ib]*wtk[ik]*cs2
                 spftot_pjt3 += spfkb*pjt3[ik,ib]*wtk[ik]*cs3

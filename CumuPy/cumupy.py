@@ -292,6 +292,8 @@ else:
 
 if flag_pjt == 1:
     pjt1, pjt2, pjt3 =read_pjt_new(nkpt,nband,bdgw_min,nspin) #  read_pjt()
+    #pjt1, pjt2, pjt3 =read_pjt_new(145,8,1,nspin) # modified by SKY on 26
+    #December 2018 for calculating aluminum core 
     cs1, cs2, cs3 = read_cs(Ephoton)
 else:
     print("""
