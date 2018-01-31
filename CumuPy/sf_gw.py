@@ -53,7 +53,7 @@ def calc_spf_gw(cs1,cs2,cs3,pjt1,pjt2,pjt3,bdrange, kptrange, bdgw_min, wtk, en,
             #print("SKYDEBUT en", en[0], en[-1])
             tmpres = interpres(newen)
             
-            print("SKYDEBUT hartree", hartree[ik,ib])
+            #print("SKYDEBUT hartree", hartree[ik,ib])
             redenom = newen - hartree[ik,ib] - interpres(newen)
             tmpim = interpims(newen)
             spfkb =  abs(tmpim)/np.pi/(redenom**2 + tmpim**2)

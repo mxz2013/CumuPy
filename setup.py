@@ -69,7 +69,7 @@ setup(
 
     # This should be your name or the name of the organization which owns the
     # project.
-    author='Matteo Guzzo, Jianqiang Sky Zhou',  # Optional
+    author='Jianqiang Sky Zhou, Matteo Guzzo',  # Optional
 
     # This should be a valid email address corresponding to the author listed
     # above.
@@ -173,7 +173,27 @@ setup(
 	('/CumuPy/test/Al', ['CumuPy/test/Al/wtk.dat']),
 	('/CumuPy/test/Al', ['CumuPy/test/Al/README.rst']),
 	('/CumuPy/test/Al', ['CumuPy/test/Al/sp.out']),
-	('/CumuPy/test/Al', ['CumuPy/test/Al/spo_DS3_SIG'])
+	('/CumuPy/test/Al', ['CumuPy/test/Al/spo_DS3_SIG']),
+	('/CumuPy/test/Al', ['CumuPy/test/Al/cs_1100.0.dat']),
+	('/CumuPy/test/Al', ['CumuPy/test/Al/invar.in']),
+	('/CumuPy/test/Al', ['CumuPy/test/Al/make_input']),
+	('/CumuPy/test/Al', ['CumuPy/test/Al/pjt_d.dat']),
+	('/CumuPy/test/Al', ['CumuPy/test/Al/pjt_p.dat']),
+	('/CumuPy/test/Al', ['CumuPy/test/Al/pjt_s.dat']),
+	('/CumuPy/test/Al', ['CumuPy/test/Al/R_1100.0.dat']),
+	('/CumuPy/test/Al', ['CumuPy/test/Al/wp_s.dat']),
+	('/CumuPy/test/sodium_valence', ['CumuPy/test/sodium_valence/invar.in']),
+	('/CumuPy/test/sodium_valence', ['CumuPy/test/sodium_valence/make_input']),
+	('/CumuPy/test/sodium_valence', ['CumuPy/test/sodium_valence/README.rst']),
+	('/CumuPy/test/sodium_valence', ['CumuPy/test/sodium_valence/spo_DS3_SIG']),
+	('/CumuPy/test/sodium_valence', ['CumuPy/test/sodium_valence/sp.out']),
+	('/CumuPy/test/sodium_valence', ['CumuPy/test/sodium_valence/wtk.dat']),
+	('/CumuPy/test/sno2', ['CumuPy/test/sno2/hartree.dat']),
+	('/CumuPy/test/sno2', ['CumuPy/test/sno2/invar.in']),
+	('/CumuPy/test/sno2', ['CumuPy/test/sno2/out_gw_DS4_SIG']),
+	('/CumuPy/test/sno2', ['CumuPy/test/sno2/README.srt']),
+	('/CumuPy/test/sno2', ['CumuPy/test/sno2/sno2gw.out']),
+	('/CumuPy/test/sno2', ['CumuPy/test/sno2/wtk.dat'])
 	],  # Optional
     # Although 'package_data' is the preferred approach, in some case you may
     # need to place data files outside of your packages. See:
