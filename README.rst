@@ -1,6 +1,7 @@
 ===========
  CumuPy
 ===========
+
 A python code to compute the spectral functions in the cumulant expansion approximations.
 
 The code is written based on the cumulant code of Dr. Matteo Guzzo.
