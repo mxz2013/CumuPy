@@ -19,12 +19,14 @@ Installation
 
 In order to use CumuPy in your computer, you have several possibilities:
 
-1. You can install the entire project onto your pc, using the pip command. Fetch the wheel CumuPy package `here <>`_ and
+1. You can install the entire project onto your pc, using the pip command. Fetch the wheel CumuPy package `here <https://github.com/mxz2013/CumuPy/blob/master/dist/CumuPy-1.0.0-py2-none-any.whl>`_ and give
    
    ``pip install CumuPy-1.0.0-py2-none-any.whl`` 
 
    This command will also install for you ``numpy``, ``scypy``, ``matplotlib`` and ``pyfftw`` with the correct version. 
    Be sure to have at least ``libfftw3`` and ``libfftw3-dev`` installed on your system.
+   
+   Normally, this would install the package (and the tests) into ``/home/user/.local/lib/python2.7/site-packages/CumuPy``.
 
 2. You can clone it (you do not need an account on github to do so)
 
