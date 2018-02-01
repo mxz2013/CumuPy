@@ -25,6 +25,8 @@ In order to use CumuPy in your computer, you have several possibilities:
 
    This command will also install for you ``numpy``, ``scypy``, ``matplotlib`` and ``pyfftw`` with the correct version. 
    Be sure to have at least ``libfftw3`` and ``libfftw3-dev`` installed on your system.
+   
+   Normally, this would install the package (and the tests) into ``/home/user/.local/lib/python2.7/site-packages/CumuPy``.
 
 2. You can clone it (you do not need an account on github to do so)
 
