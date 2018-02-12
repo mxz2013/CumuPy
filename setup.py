@@ -69,8 +69,8 @@ setup(
 
     # This should be your name or the name of the organization which owns the
     # project.
-    author='Jianqiang Sky Zhou， and Matteo Guzzo',  # Optional
 
+    author='Jianqiang Sky Zhou, Matteo Guzzo',  # Optional
     # This should be a valid email address corresponding to the author listed
     # above.
     author_email='Jianqiang.Zhou@polytechnique.edu',  # Optional

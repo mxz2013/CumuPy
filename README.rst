@@ -29,6 +29,5 @@ with some post process. To use the code, you need to provide the following input
 
 Other required input files are for special calculations, and the users can lean more from the examples shown in the ``test`` folder.
 
-All possible variables in invar.in are: (complete later) 
 
   
