@@ -29,5 +29,15 @@ with some post process. To use the code, you need to provide the following input
 
 Other required input files are for special calculations, and the users can lean more from the examples shown in the ``test`` folder.
 
+Suggested references for the acknowledgment of CumuPy usage are:
 
+[1]Dynamical effects in electron spectroscopy. Jianqiang Sky Zhou, JJ
+Kas, Lorenzo Sponza, Igor Reshetnyak, Matteo Guzzo, Christine Giorgetti,
+Matteo Gatti, Francesco Sottile, JJ Rehr, Lucia Reining,
+The Journal of Chemical Physics 143, 184109 (2015).
+
+[2] Cumulant Green's function calculations of plasmon satellites in bulk
+sodium: Influence of screening and the crystal environment, Jianqiang Sky
+Zhou, Matteo Gatti, JJ Kas, JJ Rehr, Lucia Reining, Phys. Rev. B 97,
+035137 (2018).
   

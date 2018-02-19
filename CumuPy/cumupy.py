@@ -577,4 +577,20 @@ if int(t4/60) >= 1:
     t5 = t4 - int(t4/60)*60
 print(" Calculation lasted "+str(int(t3/3600))+" Hours, "+str(int(t4/60))+" Minutes and "+str(int(t5))+" Seconds")
 print(" "+30*"-")
+
+print("# ------------------------------------------------ #")
+print("Suggested references for the acknowledgment of CumuPy usage.")
+print("""
+      [1]Dynamical effects in electron spectroscopy. Jianqiang Sky Zhou, JJ
+      Kas, Lorenzo Sponza, Igor Reshetnyak, Matteo Guzzo, Christine Giorgetti,
+      Matteo Gatti, Francesco Sottile, JJ Rehr, Lucia Reining,
+      The Journal of Chemical Physics 143, 184109 (2015).
+
+      [2] Cumulant Green's function calculations of plasmon satellites in bulk
+      sodium: Influence of screening and the crystal environment, Jianqiang Sky
+      Zhou, Matteo Gatti, JJ Kas, JJ Rehr, Lucia Reining, Phys. Rev. B 97,
+      035137 (2018).
+      """)
+print("# ------------------------------------------------ #")
+
 print(" End of program reached.")
