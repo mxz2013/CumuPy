@@ -31,7 +31,7 @@ Other required input files are for special calculations, and the users can lean 
 
 Suggested references for the acknowledgment of CumuPy usage are:
 
-[1]Dynamical effects in electron spectroscopy. Jianqiang Sky Zhou, JJ
+[1] Dynamical effects in electron spectroscopy. Jianqiang Sky Zhou, JJ
 Kas, Lorenzo Sponza, Igor Reshetnyak, Matteo Guzzo, Christine Giorgetti,
 Matteo Gatti, Francesco Sottile, JJ Rehr, Lucia Reining,
 The Journal of Chemical Physics 143, 184109 (2015).
@@ -40,4 +40,7 @@ The Journal of Chemical Physics 143, 184109 (2015).
 sodium: Influence of screening and the crystal environment, Jianqiang Sky
 Zhou, Matteo Gatti, JJ Kas, JJ Rehr, Lucia Reining, Phys. Rev. B 97,
 035137 (2018).
+
+[3] Cumulant expansion of the retarded one-electron Green function,
+J. J. Kas, J. J. Rehr, and L. Reining, Phys. Rev. B 90, 085112 (2014).
   

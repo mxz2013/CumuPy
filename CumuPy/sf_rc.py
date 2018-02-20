@@ -19,6 +19,14 @@ from os import getcwd, pardir, mkdir, chdir
 def calc_rc (wps1,wps2,gwfermi, lda_fermi, bdrange, bdgw_min, kptrange, FFTtsize, en,enmin, enmax,
                     eqp, Elda, scgw, ims, invar_den, invar_eta, wtk,nkpt,nband,
             Rx, Ry, extrinsic, core ,Eplasmon,pjt1,pjt2,pjt3,cs1,cs2,cs3):
+
+    print("# ------------------------------------------------ #")
+    print("Suggested references for the acknowledgment of the retarded cumulant")
+    print("""
+         Cumulant expansion of the retarded one-electron Green function, 
+         J. J. Kas, J. J. Rehr, and L. Reining, Phys. Rev. B 90, 085112 (2014).
+         """)
+    print("# ------------------------------------------------ #")
     import numpy as np
     import pyfftw
     import csv
