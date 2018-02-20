@@ -41,6 +41,8 @@ sodium: Influence of screening and the crystal environment, Jianqiang Sky
 Zhou, Matteo Gatti, JJ Kas, JJ Rehr, Lucia Reining, Phys. Rev. B 97,
 035137 (2018).
 
+If the retarded cumulant is calculated:
+
 [3] Cumulant expansion of the retarded one-electron Green function,
 J. J. Kas, J. J. Rehr, and L. Reining, Phys. Rev. B 90, 085112 (2014).
   
