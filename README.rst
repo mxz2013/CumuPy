@@ -4,7 +4,7 @@
 
 A python code to compute the spectral functions in the cumulant expansion approximations.
 
-The code is written based on the cumulant code of Dr. Matteo Guzzo.
+The code is written based on the cumulant code of Dr. Matteo Guzzo. Today it is maintained and developed by Jianqiang (Sky) Zhou.
 
 It is written in python 2.7.12. The required modules are numpy, scipy, matplotlib, pyfftw(>=0.10.4). 
 
