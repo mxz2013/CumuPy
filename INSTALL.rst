@@ -19,7 +19,7 @@ Installation
 
 In order to use CumuPy in your computer, you have several possibilities:
 
-1. You can install the entire project onto your pc, using the pip command. Fetch the wheel CumuPy package `here <https://github.com/mxz2013/CumuPy/blob/master/dist/CumuPy-1.0.0-py2-none-any.whl>`_ and give
+1. You can install the entire project onto your pc, using the pip command. Fetch the wheel CumuPy package `here <https://github.com/mxz2013/CumuPy/raw/master/dist/CumuPy-1.0.0-py2-none-any.whl>`_ and give
    
    ``pip install CumuPy-1.0.0-py2-none-any.whl`` 
 
