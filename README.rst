@@ -46,3 +46,8 @@ If the retarded cumulant is calculated:
 [3] Cumulant expansion of the retarded one-electron Green function,
 J. J. Kas, J. J. Rehr, and L. Reining, Phys. Rev. B 90, 085112 (2014).
   
+  
+The development of this code has been made possible by financial support from
+the European Research Council under the European Union’s
+Seventh Framework Programme (FP/2007-2013) / **ERC grant SEED**, grant
+agreement no. 320971
