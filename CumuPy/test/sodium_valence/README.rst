@@ -12,5 +12,5 @@ Since sodium valence only contains one band, no need to take into accout project
 
 All the rest of the input files that are needed by CumuPy can be produced by excute ``./make_input`` that will automatically make ``SIG, hartree.dat, Elda.dat, Vxc.dat, eqp_abinit.dat `` .
 
-Final you can run ``python ../../cumupy.py > log &``  
+Finally you can run ``python ../../cumupy.py > log &``  
 
